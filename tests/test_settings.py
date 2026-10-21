@@ -9,6 +9,32 @@ class SettingsTests(unittest.TestCase):
   self.assertEqual(pty_host.launch_args('codex',{'model':'test-model','effort':'high'}),['codex','--model','test-model','-c','model_reasoning_effort="high"'])
   self.assertEqual(pty_host.launch_args('codex',{'effort':'high; echo bad'}),['codex'])
   self.assertEqual(pty_host.launch_args('shell',{'model':'test'}),['/bin/zsh','-l'])
+ def test_claude_uses_separate_model_and_preserves_cli_defaults(self):
+  self.assertEqual(pty_host.launch_args('claude',{}),['claude'])
+  self.assertEqual(pty_host.launch_args('claude',{'model':'codex-model','effort':'ultra'}),['claude'])
+  self.assertEqual(pty_host.launch_args('claude',{'claudeModel':'sonnet','effort':'high'}),['claude','--model','sonnet'])
+  self.assertEqual(pty_host.launch_args('codex',{'claudeModel':'opus'}),['codex'])
+  for model in ['bad model','--help','x'*161,None]:
+   self.assertEqual(pty_host.launch_args('claude',{'claudeModel':model}),['claude'])
+ def test_claude_launch_through_real_pty(self):
+  # Stand-in CLI checks the transport without requiring a paid Claude session.
+  with tempfile.TemporaryDirectory() as directory:
+   fixture=pathlib.Path(directory)/'cli.py'
+   fixture.write_text("import os,sys\nprint('ARGS='+repr(sys.argv[1:]),flush=True)\nprint('INPUT='+input(),flush=True)\nprint('SIZE='+str(os.get_terminal_size().columns)+'x'+str(os.get_terminal_size().lines),flush=True)\n")
+   code="import sys,pty_host; original=pty_host.launch_args; pty_host.launch_args=lambda mode,options:[sys.executable,'-u',"+repr(str(fixture))+"]+original(mode,options)[1:]; pty_host.main()"
+   p=subprocess.Popen([sys.executable,'-c',code,'claude',directory,json.dumps({'claudeModel':'opus','model':'unrelated','effort':'ultra'})],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+   try:
+    commands=json.dumps({'cols':91,'rows':27})+'\n'+json.dumps({'input':'hello claude\n'})+'\n'
+    p.stdin.write(commands.encode());p.stdin.flush()
+    p.wait(timeout=10)
+    output=''.join(base64.b64decode(m['data']).decode() for line in p.stdout for m in [json.loads(line)] if 'data' in m)
+    self.assertEqual(p.returncode,0)
+    self.assertIn("ARGS=['--model', 'opus']",output)
+    self.assertIn('INPUT=hello claude',output)
+    self.assertIn('SIZE=91x27',output)
+   finally:
+    if p.poll() is None:p.terminate();p.wait(timeout=5)
+    p.stdin.close();p.stdout.close()
  def test_remote_validation_and_update(self):
   with tempfile.TemporaryDirectory() as directory:
    subprocess.run(['git','init','-q',directory],check=True)

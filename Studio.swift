@@ -94,7 +94,7 @@ final class Studio: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
         switch type {
         case "ready": call("boot", [["cwd":cwd,"settings":UserDefaults.standard.dictionary(forKey:"appearance") ?? [:]]])
         case "start":
-            guard sessions[id] == nil, let mode = body["mode"] as? String, ["shell","codex","github"].contains(mode) else { return }
+            guard sessions[id] == nil, let mode = body["mode"] as? String, ["shell","codex","claude","github"].contains(mode) else { return }
             do {
                 let session = try TerminalSession(id:id,mode:mode,cwd:cwd,root:root,options:UserDefaults.standard.dictionary(forKey:"appearance") ?? [:])
                 sessions[id] = session
@@ -145,7 +145,7 @@ final class Studio: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
         decisionHandler(url.isFileURL && url.resolvingSymlinksInPath().standardizedFileURL.path.hasPrefix(root.appendingPathComponent("ui").resolvingSymlinksInPath().standardizedFileURL.path + "/") ? .allow : .cancel)
     }
     func windowShouldClose(_ sender: NSWindow) -> Bool {
-        let alert=NSAlert(); alert.messageText="Close Codex Studio?"; alert.informativeText="This ends all Codex and shell sessions in this window.";alert.addButton(withTitle:"Close sessions");alert.addButton(withTitle:"Keep working")
+        let alert=NSAlert(); alert.messageText="Close Codex Studio?"; alert.informativeText="This ends all agent and shell sessions in this window.";alert.addButton(withTitle:"Close sessions");alert.addButton(withTitle:"Keep working")
         return alert.runModal() == .alertFirstButtonReturn
     }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender:NSApplication)->Bool { true }
@@ -166,7 +166,7 @@ final class Studio: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
         }
         group("Codex Studio",[("Settings…",#selector(settingsAction),","),("Quit Codex Studio",#selector(NSApplication.terminate(_:)),"q")])
         bar.items[0].submenu?.items.last?.target=NSApp
-        group("File",[("New Codex Session",#selector(newAction),"n")])
+        group("File",[("New Agent Session",#selector(newAction),"n")])
         group("Edit",[("Copy",#selector(copyAction),"c"),("Paste",#selector(pasteAction),"v")])
         group("View",[("Toggle Terminal",#selector(sidebarAction),"j")])
         NSApp.mainMenu=bar

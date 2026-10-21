@@ -7,6 +7,12 @@ def emit(value):
 
 def launch_args(mode, options):
     if mode == 'github': return ['gh', 'auth', 'login', '--hostname', 'github.com', '--git-protocol', 'https', '--web']
+    if mode == 'claude':
+        args = ['claude']
+        model = options.get('claudeModel', '')
+        if isinstance(model, str) and model and len(model) <= 160 and not any(c.isspace() for c in model) and not model.startswith('-'):
+            args += ['--model', model]
+        return args
     if mode != 'codex': return ['/bin/zsh', '-l']
     args = ['codex']
     model = options.get('model', '')
@@ -27,10 +33,14 @@ def main():
         os.chdir(cwd)
         os.environ.update(TERM='xterm-256color', COLORTERM='truecolor', TERM_PROGRAM='CodexStudio')
         os.environ['PATH'] = '/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:' + os.environ.get('PATH', '')
+        if mode == 'claude':
+            os.environ['PATH'] += ':' + os.path.expanduser('~/.local/bin')
         try:
             os.execvp(args[0], args)
         except OSError as exc:
             print('Could not launch ' + args[0] + ': ' + str(exc), flush=True)
+            if mode == 'claude':
+                print('Install Claude Code with: brew install --cask claude-code\r\nThen run claude in the sidebar to sign in and start a new session.', flush=True)
             os._exit(127)
     def stop(*_):
         try: os.killpg(pid, signal.SIGHUP)

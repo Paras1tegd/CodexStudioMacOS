@@ -7,7 +7,7 @@ const palettes = {
   Dune: ['#ebe6de','#f8f5ee','#f1ece3','#dcd4c7','#3c3832','#8b8173','#8e684a','#e9e1d5'],
   Forest: ['#121b18','#19241f','#15201c','#2b3b32','#e1e9df','#8eaa98','#a9c49b','#29392e']
 };
-let settings = {theme:'Graphite',fontSize:14,sidebar:false,model:'',effort:'',customThemes:{},panelOpacity:100,highlightOpacity:100,settingsOpacity:100,githubWidget:false};
+let settings = {theme:'Graphite',fontSize:14,sidebar:false,provider:'codex',claudeModel:'',model:'',effort:'',customThemes:{},panelOpacity:100,highlightOpacity:100,settingsOpacity:100,githubWidget:false};
 let catalog=[], integrationBusy=false;
 let active = null, workspace = '', counter = 0;
 const sessions = new Map();
@@ -31,7 +31,7 @@ function terminal(id, mode){
  if(mode!=='shell'){host.className='terminal-host';$('terminals').append(host);}
  const term=new Xterm.Terminal({allowTransparency:true,cursorBlink:true,fontFamily:'Menlo, Monaco, monospace',fontSize:settings.fontSize,lineHeight:1.28,scrollback:10000,allowProposedApi:false,convertEol:false});
  const fit=new Xterm.FitAddon();term.loadAddon(fit);term.open(host);
- const s={id,mode,term,fit,host,ended:false,workspace,model:settings.model,effort:settings.effort};sessions.set(id,s);
+ const s={id,mode,term,fit,host,ended:false,workspace,model:mode==='claude'?settings.claudeModel:settings.model,effort:mode==='claude'?'':settings.effort};sessions.set(id,s);
  term.onData(input=>send({type:'input',id,input}));
  term.onResize(size=>send({type:'resize',id,...size}));
  term.attachCustomKeyEventHandler(event=>{
@@ -42,19 +42,19 @@ function terminal(id, mode){
    return true;
  });
  if(mode!=='shell'){
-  const tab=document.createElement('button');tab.className='tab';tab.textContent=mode==='github'?'GitHub sign-in':'◌  Session '+(++counter);tab.role='tab';tab.onclick=()=>activate(id);tab.dataset.id=id;$('tabs').append(tab);activate(id);
+  const tab=document.createElement('button');tab.className='tab';tab.textContent=mode==='github'?'GitHub sign-in':(mode==='claude'?'Claude ':'Codex ')+(++counter);tab.role='tab';tab.onclick=()=>activate(id);tab.dataset.id=id;$('tabs').append(tab);activate(id);
  }
  theme();return s;
 }
 function activate(id){active=id;sessions.forEach(s=>{if(s.mode!=='shell')s.host.hidden=s.id!==id;});document.querySelectorAll('.tab').forEach(b=>{b.classList.toggle('active',b.dataset.id===id);b.setAttribute('aria-selected',b.dataset.id===id);});fitAll();sessions.get(id)?.term.focus();updateStatus();}
-function updateStatus(){const s=sessions.get(active);$('status').textContent=s?.ended?'Session ended · start a new session':'●  '+((s?.workspace||workspace).split('/').pop()||'Workspace')+'  /  '+(s?.mode==='github'?'GitHub sign-in':(s?.model||'Codex default')+(s?.effort?' · '+s.effort:''));}
-function createCodex(){const id='codex-'+Date.now();terminal(id,'codex');send({type:'start',id,mode:'codex'});}
+function updateStatus(){const s=sessions.get(active);$('agentLabel').textContent=s?.mode==='claude'?'Claude Code':s?.mode==='github'?'GitHub sign-in':'Codex CLI';$('status').textContent=s?.ended?'Session ended · start a new session':'●  '+((s?.workspace||workspace).split('/').pop()||'Workspace')+'  /  '+(s?.mode==='github'?'GitHub sign-in':(s?.mode==='claude'?'Claude · '+(s.model||'default'):(s?.model||'Codex default'))+(s?.effort?' · '+s.effort:''));}
+function createCodex(){const mode=settings.provider==='claude'?'claude':'codex';const id=mode+'-'+Date.now();terminal(id,mode);send({type:'start',id,mode});}
 function sidebar(show){settings.sidebar=show;$('sidebar').hidden=!show;$('toggle').setAttribute('aria-pressed',show);if(show&&!sessions.has('shell')){terminal('shell','shell');send({type:'start',id:'shell',mode:'shell'});}fitAll();save();if(show)sessions.get('shell')?.term.focus();else sessions.get(active)?.term.focus();}
 function dialog(show){$('overlay').hidden=!show;document.querySelector('header').inert=show;document.querySelector('main').inert=show;if(show){syncSettings();refreshIntegration();$('closeSettings').focus();}else sessions.get(active)?.term.focus();}
 window.studio = {
  boot(config){settings={...settings,...config.settings};settings.customThemes ||= {};renderThemes();workspace=config.cwd;$('folderName').textContent=workspace.split('/').pop()||'Workspace';$('folder').title=workspace+' — choose folder for new sessions';theme();createCodex();if(settings.sidebar)sidebar(true);showGithubWidget(settings.githubWidget);},
  receive(id,msg){const s=sessions.get(id);if(!s)return;if(msg.data)s.term.write(Uint8Array.from(atob(msg.data),c=>c.charCodeAt(0)));if(msg.exit!==undefined){s.ended=true;s.term.writeln('\r\n\x1b[90mSession ended ('+msg.exit+'). Start a new session to continue.\x1b[0m');updateStatus();}},
- folder(path){workspace=path;$('folderName').textContent=path.split('/').pop();$('folder').title=path;createCodex();if(settings.githubWidget)loadGithubWidget();toast('New Codex session opened in '+path.split('/').pop());},
+ folder(path){workspace=path;$('folderName').textContent=path.split('/').pop();$('folder').title=path;createCodex();if(settings.githubWidget)loadGithubWidget();toast('New session opened in '+path.split('/').pop());},
  integration(result){
   integrationBusy=false;document.querySelectorAll('[data-section="github"] button').forEach(b=>b.disabled=false);
   if(result.error){$('githubMessage').textContent=result.error;return;}
@@ -99,11 +99,19 @@ function syncSettings(){
  for(const key of ['panelOpacity','highlightOpacity','settingsOpacity']){$(key).value=settings[key];$(key+'Value').textContent=settings[key]+'%';}
  renderModels();syncEditor();
 }
+function modelKey(){return settings.provider==='claude'?'claudeModel':'model';}
 function renderModels(){
- const known=catalog.some(m=>m.id===settings.model);
- $('model').replaceChildren(new Option('Codex default',''));
- for(const m of catalog)$('model').add(new Option(m.name,m.id));
- $('model').value=known?settings.model:'';$('customModel').value=known?'':settings.model;renderEfforts();
+ const claude=settings.provider==='claude';
+ const choices=claude?[{id:'sonnet',name:'Claude Sonnet'},{id:'opus',name:'Claude Opus'},{id:'haiku',name:'Claude Haiku'}]:catalog;
+ const selected=settings[modelKey()]||'';
+ const known=choices.some(m=>m.id===selected);
+ $('provider').value=claude?'claude':'codex';
+ $('model').replaceChildren(new Option(claude?'Claude Code default':'Codex default',''));
+ for(const m of choices)$('model').add(new Option(m.name,m.id));
+ $('model').value=known?selected:'';$('customModel').value=known?'':selected;
+ $('modelHint').textContent=claude?'Aliases follow the models available through Claude Code. You can also enter a full Claude model ID.':'Available choices come from your local Codex model catalog.';
+ $('claudeSetup').hidden=!claude;$('effortField').hidden=claude;
+ if(!claude)renderEfforts();
 }
 function renderEfforts(){
  const model=catalog.find(m=>m.id===settings.model);
@@ -130,8 +138,9 @@ function storeTheme(update){
 }
 $('saveTheme').onclick=()=>storeTheme(false);$('updateTheme').onclick=()=>storeTheme(true);
 $('deleteTheme').onclick=()=>{if(!Object.hasOwn(settings.customThemes,settings.theme))return;if(!confirm('Delete “'+settings.theme+'”?'))return;delete settings.customThemes[settings.theme];settings.theme='Graphite';renderThemes();theme();syncEditor();save();};
-$('model').onchange=()=>{settings.model=$('model').value;$('customModel').value='';renderEfforts();save();};
-$('customModel').onchange=()=>{const value=$('customModel').value.trim();if(/\s/.test(value)){toast('Model IDs cannot contain spaces.');return;}settings.model=value||$('model').value;renderEfforts();save();};
+$('provider').onchange=()=>{settings.provider=$('provider').value;renderModels();save();};
+$('model').onchange=()=>{settings[modelKey()]=$('model').value;renderModels();save();};
+$('customModel').onchange=()=>{const value=$('customModel').value.trim();if(/\s/.test(value)){toast('Model IDs cannot contain spaces.');return;}settings[modelKey()]=value||$('model').value;renderModels();save();};
 $('effort').onchange=()=>{settings.effort=$('effort').value;save();};
 $('startConfigured').onclick=()=>{dialog(false);createCodex();};
 $('chooseRepoFolder').onclick=()=>{dialog(false);send({type:'folder'});};

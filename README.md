@@ -1,6 +1,6 @@
 # Codex Studio
 
-A local macOS app with a real Codex CLI terminal, independent zsh sidebar, four color themes, text sizing, multiple Codex sessions, and a workspace folder picker.
+A local macOS app with a real Codex CLI terminal, independent zsh sidebar, four color themes, text sizing, multiple Codex or Claude sessions, and a workspace folder picker.
 
 Open `~/Applications/Codex Studio.app`. Your existing Codex CLI installation and login are used. This is a separate Codex conversation, not a continuation of the ChatGPT window.
 
@@ -112,7 +112,7 @@ This release build uses bundled resources and does not embed your source-folder 
 
 ### 7. Choose your workspace
 
-In Codex Studio, click the folder button and select the project you want to work on. This starts a new Codex session in that folder. Press **Command J** to open the independent zsh terminal. Your existing Codex configuration and login are used.
+In Codex Studio, click the folder button and select the project you want to work on. This starts a new session with your selected provider in that folder. Press **Command J** to open the independent zsh terminal. Your existing Codex configuration and login are used.
 
 ### Install from an app ZIP
 
@@ -136,9 +136,9 @@ The app is ad-hoc signed and not notarized. If macOS blocks a downloaded copy an
 
 - Command J: show/hide the manual terminal. Hiding it preserves the session.
 - Command comma: appearance settings. Choices save automatically.
-- Command N: new Codex terminal session.
+- Command N: new terminal session with your selected provider.
 - Command C / V: copy selected terminal text / paste.
-- Folder button: choose a workspace and start a new Codex session there. Existing sessions retain their original directories.
+- Folder button: choose a workspace and start a new session with your selected provider there. Existing sessions retain their original directories.
 
 ## Live editing
 
@@ -168,6 +168,21 @@ Swift AppKit + WKWebView host the local interface; the Python helper provides re
 Terminal renderer: xterm.js and FitAddon from the locally installed open-source Playwright distribution. See `ui/vendor/` for notices. The adapter replaces only the bundler's CommonJS loader helper.
 
 ## Settings
+
+### Claude models
+
+To use Anthropic models, install [Claude Code](https://code.claude.com/docs/en/quickstart) and sign in with your own account:
+
+```sh
+brew install --cask claude-code
+claude
+```
+
+Open **Settings → Model & thinking**, set **Provider** to **Anthropic Claude**, and choose **Claude Sonnet**, **Claude Opus**, **Claude Haiku**, or **Claude Code default**. You can also enter a full model ID in **Custom model ID**. Click **Start a new session**. These choices use Claude Code's [model aliases](https://code.claude.com/docs/en/model-config); access depends on your account and Claude configuration.
+
+Claude runs in a real terminal through the `claude` CLI. Codex and Claude model choices are saved separately, and switching providers only affects new sessions. Claude keeps its own authentication, permissions, and thinking settings; use its `/model` menu to manage the active model and effort. No credentials are bundled or copied between providers. Homebrew installations and native Claude installations in `~/.local/bin` are supported.
+
+After updating to this version, quit the app when your sessions are finished, rebuild it, and reopen it. See the installation steps above for release builds, or run `bash build.sh` for the development app. JavaScript, HTML, Swift, and Python changes require reopening; only CSS reloads live.
 
 Open **Settings** or press **Command comma**. Appearance includes the four built-in themes, saved custom themes with eight editable colors, text size, and independent panel, highlight, and settings-background opacity. Opacity blends with the app background and leaves text opaque.
 
