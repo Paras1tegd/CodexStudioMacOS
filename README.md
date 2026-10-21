@@ -4,6 +4,134 @@ A local macOS app with a real Codex CLI terminal, independent zsh sidebar, four 
 
 Open `~/Applications/Codex Studio.app`. Your existing Codex CLI installation and login are used. This is a separate Codex conversation, not a continuation of the ChatGPT window.
 
+## Install
+
+There is currently no published binary release. Follow the source installation steps below. If you already received a `CodexStudioMacOS.zip` app bundle, install the dependencies first, then follow **Install from an app ZIP**.
+
+### Dependencies
+
+| Dependency | Needed for | Installation |
+| --- | --- | --- |
+| macOS | Running the native app | The app declares macOS 13 or later; the Homebrew route below is supported on macOS 15 or later. Dependency and compiler requirements may be higher than the app's declared minimum. |
+| Apple Command Line Tools | Swift compiler, Git, and the `/usr/bin/python3` interpreter used by the app | Step 1 below. Full Xcode is not required. |
+| Homebrew | Installing the CLI tools in this guide | Step 2 below. Optional if you install those tools another way. |
+| Codex CLI and your own sign-in | The main Codex terminal | Step 3 below. |
+| GitHub CLI (`gh`) and your own GitHub sign-in | Optional GitHub account controls and contribution widget | Step 4 below. |
+
+The terminal renderer and its licenses are bundled. No separate Node.js, npm, pip packages, Playwright, or xterm.js installation is needed for this Homebrew setup. An internet connection is needed to install dependencies and use online Codex/GitHub features.
+
+### 1. Install Apple's Command Line Tools
+
+Open **Terminal** (Applications → Utilities) and run:
+
+```sh
+xcode-select --install
+```
+
+Complete the installer before continuing. If the tools are already installed, skip the installation. Check them with:
+
+```sh
+xcrun swiftc --version
+git --version
+/usr/bin/python3 --version
+```
+
+The app specifically launches `/usr/bin/python3`; a separate Homebrew Python installation does not replace that requirement. See [Apple's Command Line Tools instructions](https://developer.apple.com/documentation/xcode/installing-the-command-line-tools/).
+
+### 2. Install Homebrew
+
+If `brew --version` already works, skip this step. Otherwise follow the installer at [brew.sh](https://brew.sh/):
+
+```sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+Follow the installer's **Next steps**, including its commands to add Homebrew to your shell environment. Open a new Terminal window and check:
+
+```sh
+brew --version
+```
+
+Homebrew currently supports macOS 15 and newer. On older macOS versions, use compatible tools from their official distributions; this guide does not establish compatibility for every older system.
+
+### 3. Install Codex CLI and sign in
+
+Install the [Codex Homebrew package](https://formulae.brew.sh/cask/codex):
+
+```sh
+brew install --cask codex
+codex --version
+codex
+```
+
+Complete the sign-in prompts using your own account, then exit the CLI with `/quit`. If you already use Codex CLI, keep your existing installation and login. See the [official Codex CLI guide](https://learn.chatgpt.com/docs/codex/cli) for sign-in and alternative installation methods.
+
+The app searches `/opt/homebrew/bin` and `/usr/local/bin` for Codex. Tools installed only through a shell-specific version manager may work in Terminal but be unavailable when the app opens from Finder; the Homebrew installation above avoids that issue.
+
+### 4. Optional: install GitHub CLI
+
+Skip this step if you do not need the GitHub controls or contribution widget. Follow the [GitHub CLI installation guide](https://cli.github.com/):
+
+```sh
+brew install gh
+gh auth login --hostname github.com --git-protocol https --web
+gh auth status --hostname github.com
+```
+
+Follow the browser prompts with your own GitHub account. No developer account or credentials are included with Codex Studio.
+
+### 5. Download the source
+
+On this repository's GitHub page, select **Code → Download ZIP**. Open the downloaded ZIP in Finder. With the default Downloads location, open the extracted project in Terminal:
+
+```sh
+cd "$HOME/Downloads/CodexStudioMacOS-main"
+```
+
+If you extracted it elsewhere or renamed it, use that folder instead. It must contain `build.sh`, `Studio.swift`, and `ui/`. You can also use an existing Git clone of this repository.
+
+### 6. Build and install the app
+
+Run from the source folder:
+
+```sh
+bash build.sh --release
+```
+
+This builds `.build/release/Codex Studio.app` and `.build/release/CodexStudioMacOS.zip`. The executable is built for the Mac's current build architecture; this script does not produce a universal binary.
+
+If an older Codex Studio is open, finish your work and quit it normally before replacing it. Then install into your personal Applications folder:
+
+```sh
+mkdir -p "$HOME/Applications"
+ditto ".build/release/Codex Studio.app" "$HOME/Applications/Codex Studio.app"
+open "$HOME/Applications/Codex Studio.app"
+```
+
+This release build uses bundled resources and does not embed your source-folder path. It does not require the downloaded source folder to remain in place.
+
+### 7. Choose your workspace
+
+In Codex Studio, click the folder button and select the project you want to work on. This starts a new Codex session in that folder. Press **Command J** to open the independent zsh terminal. Your existing Codex configuration and login are used.
+
+### Install from an app ZIP
+
+1. Complete dependency steps 1–3 above, and step 4 if you want GitHub integration.
+2. Obtain `CodexStudioMacOS.zip` built for your Mac's architecture from a source you trust. GitHub's **Code → Download ZIP** contains source code, not a compiled app.
+3. Double-click the app ZIP in Finder to extract `Codex Studio.app`.
+4. Quit any running copy, then move the extracted app into your home folder's `Applications` folder (create it if needed).
+5. Double-click the app, then choose your workspace as described in step 7.
+
+The app is ad-hoc signed and not notarized. If macOS blocks a downloaded copy and you trust its source, attempt to open it once, then use **System Settings → Privacy & Security → Open Anyway** and confirm. See [Apple's instructions for opening downloaded apps](https://support.apple.com/en-us/102445).
+
+### Installation troubleshooting
+
+- **`brew: command not found`:** complete Homebrew's printed Next steps and reopen Terminal.
+- **`Could not launch codex`:** check `command -v codex` and `codex --version` in Terminal. Use the Homebrew installation above, then reopen the app when your sessions are finished.
+- **Missing Python or developer tools:** rerun step 1 and verify `/usr/bin/python3 --version` before launching the app.
+- **GitHub widget cannot connect:** run `gh auth status --hostname github.com`, complete sign-in if needed, then refresh the widget.
+- **Build fails on an older Mac:** check macOS and toolchain compatibility. The app's declared minimum alone does not guarantee the current dependencies work on that version.
+
 ## Controls
 
 - Command J: show/hide the manual terminal. Hiding it preserves the session.
