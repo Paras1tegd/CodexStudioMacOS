@@ -26,6 +26,15 @@ Requires macOS, Apple command-line developer tools (Swift and `/usr/bin/python3`
 bash build.sh
 ```
 
+For a shareable build, run `bash build.sh --release`. This creates
+`.build/release/CodexStudioMacOS.zip` without changing the installed app or
+interrupting running sessions. The release uses bundled resources and omits the
+development source path, local file metadata, and Python caches. It does not
+bundle GitHub/Codex credentials, workspace files, or saved app preferences.
+GitHub features use the recipient's own local GitHub CLI account. The build is
+ad-hoc signed, not notarized. Share this release ZIP rather than the installed
+development app. Repository ownership and commit history remain visible on GitHub.
+
 Swift AppKit + WKWebView host the local interface; the Python helper provides real PTYs. No listening server and no CDN or online dependency at startup. Terminal output is rendered as terminal data, never HTML. The webview cannot navigate outside its local UI folder. Codex retains its own approval and sandbox settings.
 
 Terminal renderer: xterm.js and FitAddon from the locally installed open-source Playwright distribution. See `ui/vendor/` for notices. The adapter replaces only the bundler's CommonJS loader helper.
