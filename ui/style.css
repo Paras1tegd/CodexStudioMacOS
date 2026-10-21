@@ -1,0 +1,87 @@
+:root{color-scheme:dark;--bg:#141517;--surface:#1b1c1f;--panel:#191a1d;--line:#2c2d32;--text:#ececef;--muted:#929399;--accent:#b8acd9;--hover:#28272e;--terminal:#1b1c1f}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:13px -apple-system,BlinkMacSystemFont,sans-serif;height:100vh;overflow:hidden}button{font:inherit;border:1px solid var(--line);background:transparent;color:var(--text);border-radius:8px;padding:8px 11px;cursor:pointer;white-space:nowrap}button:hover{background:var(--hover)}button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}button[aria-pressed=true]{background:var(--hover);border-color:var(--accent)}header{height:96px;padding:25px 26px;display:flex;align-items:center;justify-content:space-between;gap:16px}.brand{display:flex;align-items:center;gap:12px;font-size:19px;letter-spacing:-.6px}.brand strong{font-weight:400;color:var(--muted)}.brand small{display:block;font-size:11px;letter-spacing:.1px;color:var(--muted);margin-top:5px}.mark{font-size:28px;background:var(--hover);color:var(--accent);border:1px solid var(--line);border-radius:13px;width:44px;height:44px;display:grid;place-items:center}.header-actions{display:flex;gap:8px}.header-actions button{height:35px}.header-actions span{margin-left:5px}kbd{font:10px -apple-system;color:var(--muted);margin-left:9px}main{display:flex;gap:13px;height:calc(100vh - 113px);margin:0 17px 17px}.workspace,aside{background:var(--surface);border:1px solid var(--line);border-radius:13px;display:flex;flex-direction:column;overflow:hidden;min-width:0}.workspace{flex:1}aside{width:36%;min-width:290px;max-width:600px;background:var(--panel)}[hidden]{display:none!important}.pane-head{display:flex;align-items:center;justify-content:space-between;height:54px;flex-shrink:0;padding:0 18px;border-bottom:1px solid var(--line)}.pane-head b{font-weight:550;font-size:12px}.pane-head>div{display:flex;align-items:center;gap:10px}.subtle{color:var(--muted);font-size:11px}.live-dot{width:6px;height:6px;border-radius:100%;background:#8eb9a0;box-shadow:0 0 10px #8eb9a020}.quiet{font-size:11px;color:var(--muted);border:0;padding:7px}.icon{border:0;padding:4px 9px;font-size:20px;color:var(--muted)}#tabs{display:flex;gap:5px;padding:10px 15px 2px;overflow-x:auto;flex-shrink:0}.tab{font-size:11px;padding:7px 11px;border-color:transparent;color:var(--muted)}.tab.active{color:var(--text);background:var(--hover);border-color:var(--line)}#terminals{flex:1;min-height:0;position:relative;margin:19px 20px 9px}.terminal-host{position:absolute;inset:0}#shell{flex:1;min-height:0;margin:12px 16px}.shell-caption{font-size:9px;letter-spacing:1.5px;color:var(--muted);padding:20px 18px 0}.shell-icon{color:var(--accent);font:15px monospace}footer{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:10px;color:var(--muted);padding:10px 17px;border-top:1px solid var(--line);height:35px;flex-shrink:0}.sep{padding:0 7px}.xterm{height:100%;padding:0}.xterm-viewport::-webkit-scrollbar{width:5px}.xterm-viewport::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}#overlay{position:fixed;inset:0;background:#0007;backdrop-filter:blur(7px);display:grid;place-items:center;z-index:20}.settings{width:540px;border:1px solid var(--line);border-radius:20px;background:var(--surface);padding:30px;box-shadow:0 25px 100px #0005}.settings-head{display:flex;align-items:center;justify-content:space-between}.eyebrow{font-size:9px;letter-spacing:1.8px;color:var(--accent)}h1{font-size:27px;font-weight:550;letter-spacing:-.8px;margin:9px 0 0}.settings p{color:var(--muted);margin:9px 0 28px}.label{display:block;font-size:12px;margin-bottom:12px}#themes{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:26px}.theme-card{padding:6px;text-align:left;font-size:10px;color:var(--muted)}.theme-card.selected{border-color:var(--accent);color:var(--text)}.theme-card span{display:block;padding:7px 3px 3px}.swatch{height:60px;border-radius:5px;position:relative;background:var(--swatch-bg);padding:10px;overflow:hidden}.swatch:before{content:'';display:block;width:65%;height:5px;border-radius:4px;background:var(--swatch-accent);box-shadow:0 12px 0 var(--swatch-line),15px 24px 0 var(--swatch-line)}.setting-row{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding:20px 0;gap:15px}.setting-row b{font-size:12px;font-weight:500}.setting-row small{display:block;font-size:11px;color:var(--muted);margin-top:6px}.stepper{display:flex;align-items:center;border:1px solid var(--line);border-radius:9px}.stepper button{border:0}.stepper output{width:25px;text-align:center;font-size:12px}.badge{font-size:10px;color:var(--accent);background:var(--hover);padding:6px 9px;border-radius:6px}.settings-bottom{border-top:1px solid var(--line);padding-top:20px;display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--muted)}#done{background:var(--accent);color:var(--bg);border:0;padding:9px 22px}#toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:var(--hover);border:1px solid var(--line);padding:11px 18px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}#toast.show{opacity:1}@media(max-width:900px){.subtle{display:none}.header-actions kbd{display:none}footer>span:last-child{display:none}.brand small{display:none}.header-actions span{font-size:11px}}
+
+/* Live-refresh verification: preserve existing terminal processes. */
+
+/* Keep the real terminal input, but give CLI message/input surfaces app chrome.
+   xterm's DOM renderer emits explicit background colors on highlighted cells.
+   Group adjacent highlighted rows so multiline input has one rounded outline.
+   Scope this to Codex: ANSI colors in the independent shell stay untouched. */
+.workspace {
+  border-radius: 22px;
+  box-shadow: 0 12px 36px #00000012;
+}
+.workspace .pane-head { border-bottom-color: transparent; }
+#tabs { padding-top: 3px; }
+.tab { border-radius: 999px; padding: 7px 14px; }
+#terminals { margin: 20px 22px 12px; }
+.workspace footer { border-top-color: transparent; }
+
+#terminals .xterm-rows > div:has(> span:first-child[style*="background-color:"]) {
+  background: var(--hover);
+  border-radius: 14px;
+  box-shadow: inset 1px 0 var(--line), inset -1px 0 var(--line);
+}
+#terminals .xterm-rows > div:has(> span:first-child[style*="background-color:"]) > span[style*="background-color:"]:not(.xterm-cursor) {
+  background-color: transparent !important;
+}
+#terminals .xterm-rows > div:has(> span:first-child[style*="background-color:"]):has(+ div > span:first-child[style*="background-color:"]) {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+#terminals .xterm-rows > div:has(> span:first-child[style*="background-color:"]) + div:has(> span:first-child[style*="background-color:"]) {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+@media (max-width: 900px) {
+  #terminals { margin-left: 16px; margin-right: 16px; }
+}
+
+
+/* Settings surfaces: opacity affects backgrounds only, never terminal text. */
+.workspace{background:var(--panel-fill,var(--surface))}
+aside{background:var(--sidebar-fill,var(--panel))}
+#terminals .xterm-rows > div:has(> span:first-child[style*="background-color:"]){background:var(--highlight-fill,var(--hover))}
+.settings{width:min(680px,calc(100vw - 48px));max-height:calc(100vh - 48px);display:flex;flex-direction:column;padding:26px 28px;background:var(--settings-fill,var(--surface));backdrop-filter:blur(28px)}
+.settings-head,.settings-nav,.settings-bottom{flex-shrink:0}
+.settings-nav{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-top:22px;padding-bottom:12px}
+.settings-nav button{border-color:transparent;color:var(--muted);font-size:12px}
+.settings-nav [aria-selected=true]{background:var(--hover);color:var(--text);border-color:var(--line)}
+.settings-scroll{overflow-y:auto;min-height:0;padding:0 4px 16px 0}
+.settings p{line-height:1.6;margin:16px 0 20px}
+.settings small,.hint{display:block;color:var(--muted);font-size:11px;line-height:1.6}
+.setting-row label{font-size:12px}.setting-row small{margin-top:5px}
+.slider{display:flex;align-items:center;gap:12px}.slider input{width:140px;accent-color:var(--accent)}.slider output{width:35px;text-align:right;color:var(--muted);font-size:11px}
+.field{display:grid;gap:9px;margin:22px 0}.field label{font-size:12px;font-weight:550}
+input:not([type=range]):not([type=color]),select{width:100%;font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:disabled{opacity:.4;cursor:default}
+details{border:1px solid var(--line);border-radius:12px;padding:16px;margin:18px 0 4px}summary{cursor:pointer;font-size:12px}
+#colorFields{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0}#colorFields label{font-size:10px;color:var(--muted);display:grid;gap:8px}input[type=color]{width:100%;height:33px;background:transparent;border:1px solid var(--line);border-radius:6px;padding:2px;cursor:pointer}
+.editor-actions{display:flex;gap:8px;flex-wrap:wrap}.editor-actions button{font-size:11px}
+.notice,.connection-card{padding:17px;border-radius:12px;border:1px solid var(--line);background:var(--hover);line-height:1.6;font-size:12px;margin:20px 0}.connection-card p{margin:8px 0 14px}#githubWorkspace{font-size:11px;overflow-wrap:anywhere;margin-top:8px;color:var(--muted)}
+.primary{background:var(--accent);color:var(--bg);border:0;margin:0 0 10px}.settings-bottom{padding-top:16px}.theme-card span{overflow:hidden;text-overflow:ellipsis}
+
+/* A compact activity drawer within the independent terminal pane. */
+#githubWidget{flex:0 0 26%;min-height:195px;overflow:auto;padding:12px 16px 10px;border-top:1px solid var(--line);background:linear-gradient(145deg,var(--hover),transparent 75%)}
+.github-widget-head,.github-widget-head>div,.github-summary,.github-meta,.widget-repo-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.github-widget-head>div{justify-content:flex-start;min-width:0}.github-widget-head b{font-size:11px;font-weight:600}
+#widgetLogin{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.github-widget-head button{border:0;padding:0 4px;font-size:16px;color:var(--muted)}
+.github-summary{justify-content:flex-start;margin:9px 0 8px;font-size:10px;color:var(--muted)}
+.github-summary strong{font-size:20px;letter-spacing:-.8px;color:var(--text);font-weight:550}
+#contributionGrid{display:grid;grid-template-columns:repeat(26,minmax(0,1fr));gap:3px;height:61px}
+.contribution-week{display:grid;grid-template-rows:repeat(7,1fr);gap:3px}
+.contribution-day{border-radius:2px;background:var(--line)}
+.contribution-day[data-level="1"],.github-legend i:nth-child(2){background:#285d49}
+.contribution-day[data-level="2"],.github-legend i:nth-child(3){background:#398365}
+.contribution-day[data-level="3"]{background:#58ae82}
+.contribution-day[data-level="4"],.github-legend i:nth-child(4){background:#8bd5a5}
+.github-meta{margin:6px 0 9px;font-size:8px;color:var(--muted)}
+.github-legend{display:flex;align-items:center;gap:3px}.github-legend i{width:6px;height:6px;border-radius:2px;background:var(--line)}
+.widget-repo-row{border-top:1px solid var(--line);padding-top:7px;font-size:10px}
+#widgetRepo{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+.widget-repo-row button{padding:3px 7px;font-size:10px;border-radius:5px}
+#widgetRepoForm{margin-top:10px;font-size:10px}#widgetRepoForm>div{display:flex;gap:5px;margin:6px 0}
+#widgetRepoForm input{min-width:0;padding:6px;font-size:11px}#widgetRepoForm button{font-size:10px;padding:5px}
+#widgetRepoForm small{color:var(--muted);line-height:1.6}#widgetChooseFolder{border:0;text-decoration:underline;padding:0!important;color:var(--accent)}
+#widgetMessage{font-size:10px;line-height:1.5;color:var(--muted);margin:6px 0 0}#widgetMessage:empty{display:none}
