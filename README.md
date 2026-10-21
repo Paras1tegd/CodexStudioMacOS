@@ -1,6 +1,6 @@
 # Codex Studio
 
-A local macOS app with a real Codex CLI terminal, independent zsh sidebar, four color themes, text sizing, multiple Codex or Claude sessions, and a workspace folder picker.
+A local macOS app with a real Codex CLI terminal, independent zsh sidebar, six color themes, font and text sizing controls, desktop transparency, configurable panel layout, multiple Codex or Claude sessions, and a workspace folder picker.
 
 Open `~/Applications/Codex Studio.app`. Your existing Codex CLI installation and login are used. This is a separate Codex conversation, not a continuation of the ChatGPT window.
 
@@ -16,7 +16,10 @@ There is currently no published binary release. Follow the source installation s
 | Apple Command Line Tools | Swift compiler, Git, and the `/usr/bin/python3` interpreter used by the app | Step 1 below. Full Xcode is not required. |
 | Homebrew | Installing the CLI tools in this guide | Step 2 below. Optional if you install those tools another way. |
 | Codex CLI and your own sign-in | The main Codex terminal | Step 3 below. |
+| Claude Code and your own sign-in | Optional Anthropic Claude terminal sessions | See **Claude models** below. |
 | GitHub CLI (`gh`) and your own GitHub sign-in | Optional GitHub account controls and contribution widget | Step 4 below. |
+
+AppKit, WebKit, zsh, `sips`, `codesign`, and `ditto` are supplied by macOS or Apple’s developer tools. The Python helpers use only the standard library. Icon generation uses the Swift compiler and native image tools during each build. The new appearance controls and startup animation add no third-party dependencies.
 
 The terminal renderer and its licenses are bundled. No separate Node.js, npm, pip packages, Playwright, or xterm.js installation is needed for this Homebrew setup. An internet connection is needed to install dependencies and use online Codex/GitHub features.
 
@@ -184,7 +187,9 @@ Claude runs in a real terminal through the `claude` CLI. Codex and Claude model 
 
 After updating to this version, quit the app when your sessions are finished, rebuild it, and reopen it. See the installation steps above for release builds, or run `bash build.sh` for the development app. JavaScript, HTML, Swift, and Python changes require reopening; only CSS reloads live.
 
-Open **Settings** or press **Command comma**. Appearance includes the four built-in themes, saved custom themes with eight editable colors, text size, and independent panel, highlight, and settings-background opacity. Opacity blends with the app background and leaves text opaque.
+Open **Settings** or press **Command comma**. Appearance includes the six built-in themes, saved custom themes with eight editable colors, terminal font (Menlo, Monaco, SF Mono with Menlo fallback, or Courier New), text size, and window background opacity from 0–100%. Lowering window opacity reveals the desktop through the main background and terminal panels while leaving text opaque. Independent panel and highlight opacity further adjust those surfaces; settings-card opacity is separate.
+
+Choose **Terminal position** (left, right, top, or bottom) and **Terminal panel size** (25–60%) in Appearance. Show or hide the terminal with Command J. Layout and font changes resize the existing PTYs without restarting sessions, and all choices persist. A brief startup fade and slide respects macOS Reduce Motion. The app icon is regenerated at all standard sizes on every build.
 
 **Model & thinking** reads the installed Codex model catalog and offers the supported effort levels. You can also enter a custom model ID. Choices apply to new sessions via Codex CLI arguments; existing sessions remain unchanged (use `/model` in Codex for those). Leaving both controls at default preserves the CLI configuration, authentication, approvals, and sandbox settings. Configuration reference: https://learn.chatgpt.com/docs/config-file/config-reference.
 
@@ -195,3 +200,15 @@ Rebuild with the app closed to install these changes; reopening alone does not u
 The terminal sidebar's **GitHub** toggle opens a compact contribution widget at the bottom right. Its visibility is saved. Refresh loads the signed-in GitHub CLI user's contribution calendar (the last 26 weeks, plus a yearly total). Activity covers all repositories. **Change → Set origin** edits the current workspace's Git remote; **choose a local folder** switches the checkout for new sessions. Existing terminals remain in their original directories. Missing sign-in and network failures appear in the widget. The widget uses GitHub's documented [contribution calendar API](https://docs.github.com/en/graphql/reference/users#contributioncalendar) through the local GitHub CLI.
 
 After widget code changes, close the app when finished with your sessions, run `bash build.sh`, and reopen Codex Studio. CSS alone continues to reload live.
+
+### Liquid Glass and app icon
+
+Choose **Liquid Glass Dark** or **Liquid Glass Light** in **Settings → Appearance**. Both use frosted panels and reflective edges, with opaque text and the existing opacity controls. Light themes use darker ANSI colors for readability. Reduced Transparency uses solid panel fills.
+
+The app loads its icon from the bundle, with a PNG fallback. Development installation refreshes Launch Services to update the icon registration. These theme choices and native icon changes require rebuilding and reopening after finishing active sessions. A separate release can be built safely with `bash build.sh --release`.
+
+### Transparency troubleshooting
+
+Desktop transparency requires the current native build: an older installed executable can keep the window opaque even when the slider saves correctly. The window, WebKit page background, and CSS canvas must all allow transparency. Control color schemes are scoped below the canvas so they cannot supply an opaque page fill. Text stays fully opaque.
+
+After updating Swift or JavaScript, close Codex Studio normally, run `bash build.sh` from another terminal in this source folder, and reopen the app. CSS alone reloads live; it cannot change an older executable’s native window settings. `bash build.sh --release` builds a separate app without interrupting active sessions.

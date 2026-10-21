@@ -64,10 +64,22 @@ final class Studio: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKN
         web = WKWebView(frame: .zero, configuration: config)
         web.navigationDelegate = self
         web.setValue(false, forKey: "drawsBackground")
+        web.underPageBackgroundColor = .clear
         window = NSWindow(contentRect: NSRect(x: 0,y: 0,width: 1180,height: 780), styleMask: [.titled,.closable,.miniaturizable,.resizable], backing: .buffered, defer: false)
         window.title = "Codex Studio"
         window.minSize = NSSize(width: 820,height: 520)
-        window.backgroundColor = NSColor(calibratedWhite: 0.08,alpha: 1)
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        // Load the installed icon independently of the development source folder.
+        let iconURLs = [Bundle.main.url(forResource: "StudioIcon", withExtension: "icns"),
+                        Bundle.main.url(forResource: "StudioIcon", withExtension: "png"),
+                        root.appendingPathComponent("Studio.icns")]
+        for case let url? in iconURLs {
+            if let icon = NSImage(contentsOf: url), icon.isValid {
+                NSApp.applicationIconImage = icon
+                break
+            }
+        }
         window.titlebarAppearsTransparent = true
         window.contentView = web
         window.delegate = self

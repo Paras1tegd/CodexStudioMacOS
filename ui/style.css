@@ -85,3 +85,78 @@ details{border:1px solid var(--line);border-radius:12px;padding:16px;margin:18px
 #widgetRepoForm input{min-width:0;padding:6px;font-size:11px}#widgetRepoForm button{font-size:10px;padding:5px}
 #widgetRepoForm small{color:var(--muted);line-height:1.6}#widgetChooseFolder{border:0;text-decoration:underline;padding:0!important;color:var(--accent)}
 #widgetMessage{font-size:10px;line-height:1.5;color:var(--muted);margin:6px 0 0}#widgetMessage:empty{display:none}
+
+/* Transparent native window; alpha applies to surfaces, not glyphs. */
+/* A root light/dark color-scheme gives WebKit an opaque canvas even when
+   WKWebView drawsBackground is disabled. Scope control styling to the body. */
+html{background:transparent;color-scheme:normal!important}
+body{color-scheme:var(--control-scheme,dark)}
+body{background:var(--window-fill,var(--bg))}
+.compact-select{max-width:200px}
+main[data-layout]{gap:13px}
+main[data-layout]>.workspace{min-height:0;min-width:0}
+main[data-layout]>aside{flex:0 0 var(--panel-size,36%);width:auto;min-width:260px;max-width:none;min-height:0}
+main[data-layout=left]{flex-direction:row-reverse}
+main[data-layout=bottom]{flex-direction:column}
+main[data-layout=top]{flex-direction:column-reverse}
+main[data-layout=bottom]>aside,main[data-layout=top]>aside{min-width:0;flex-basis:clamp(160px,var(--panel-size,36%),calc(100% - 193px))}
+main[data-layout=bottom] .shell-caption,main[data-layout=top] .shell-caption{display:none}
+main:is([data-layout=bottom],[data-layout=top])>aside{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:54px minmax(0,1fr) 35px}
+main:is([data-layout=bottom],[data-layout=top])>aside:has(#githubWidget:not([hidden])){grid-template-columns:minmax(0,1fr) minmax(240px,30%)}
+main:is([data-layout=bottom],[data-layout=top]) aside>.pane-head{grid-column:1/-1}
+main:is([data-layout=bottom],[data-layout=top]) #shell{grid-column:1;grid-row:2}
+main:is([data-layout=bottom],[data-layout=top]) aside>footer{grid-column:1;grid-row:3}
+main:is([data-layout=bottom],[data-layout=top]) #githubWidget{grid-column:2;grid-row:2/4;min-height:0;border-top:0;border-left:1px solid var(--line)}
+body.opening>header{animation:studio-arrive .5s ease-out both}
+body.opening>main{animation:studio-arrive .65s cubic-bezier(.2,.8,.2,1) both}
+@keyframes studio-arrive{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){body.opening>header,body.opening>main{animation:none}}
+
+/* Liquid Glass: layered color, frosted surfaces and a fine reflective rim.
+   Text remains fully opaque; existing opacity controls still scale the fills. */
+:root[data-material=glass] {
+  --glass-rim: #ffffff26;
+  --glass-shadow: #030b193d;
+  --glass-glow: #a3ccff16;
+}
+:root[data-material=glass][data-tone=light] {
+  --glass-rim: #ffffffd9;
+  --glass-shadow: #234c741a;
+  --glass-glow: #ffffff70;
+}
+[data-material=glass] body {
+  background:
+    radial-gradient(ellipse at 4% 0%, #7d9ee52b, transparent 52%),
+    radial-gradient(ellipse at 100% 85%, #58b8c624, transparent 55%),
+    var(--window-fill,var(--bg));
+}
+[data-material=glass] :is(.workspace,aside,.settings) {
+  background-image: linear-gradient(145deg,var(--glass-glow),transparent 45%);
+  border-color: var(--glass-rim);
+  border-radius: 22px;
+  -webkit-backdrop-filter: blur(28px) saturate(140%);
+  backdrop-filter: blur(28px) saturate(140%);
+  box-shadow: inset 0 1px 0 var(--glass-rim),0 16px 48px var(--glass-shadow);
+}
+[data-material=glass] :is(.header-actions button,.mark,.tab.active,.settings-nav [aria-selected=true]) {
+  background: linear-gradient(150deg,var(--glass-glow),transparent),var(--highlight-fill);
+  border: 1px solid var(--glass-rim);
+  box-shadow: inset 0 1px 0 var(--glass-rim),0 3px 10px var(--glass-shadow);
+}
+[data-material=glass] .header-actions button { border-radius: 999px; }
+[data-material=glass] .pane-head { background: linear-gradient(180deg,var(--glass-glow),transparent); }
+[data-material=glass] button:hover { background-color: var(--hover); }
+[data-material=glass] #overlay { background: #08152640; }
+[data-material=glass][data-tone=light] #overlay { background: #63809b2b; }
+#themes { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.theme-card span { white-space: normal; line-height: 1.4; }
+.theme-card[data-theme^="Liquid Glass"] .swatch {
+  background: radial-gradient(ellipse at top left,#b7d5ff65,transparent 65%),var(--swatch-bg);
+  box-shadow: inset 0 1px 0 #ffffff66;
+}
+@media(prefers-reduced-transparency:reduce) {
+  [data-material=glass] .workspace { background: var(--surface); }
+  [data-material=glass] aside { background: var(--panel); }
+  [data-material=glass] .settings { background: var(--surface); }
+  [data-material=glass] :is(.workspace,aside,.settings) { -webkit-backdrop-filter:none;backdrop-filter:none; }
+}

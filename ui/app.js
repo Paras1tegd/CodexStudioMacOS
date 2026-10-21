@@ -2,24 +2,37 @@ const Xterm = window.Xterm;
 const $ = id => document.getElementById(id);
 const send = message => {window.webkit?.messageHandlers.studio.postMessage(message);if(message.type==='start')setTimeout(()=>{const s=sessions.get(message.id);if(s){s.fit.fit();send({type:'resize',id:s.id,cols:s.term.cols,rows:s.term.rows});}},100);};
 const palettes = {
+  'Liquid Glass Dark': ['#101925','#192839','#1c2c40','#42546a','#edf5ff','#a8bbd0','#b6d6ff','#30465e'],
+  'Liquid Glass Light': ['#e3edf6','#f7fbff','#edf5fc','#b2c3d3','#162b40','#536b80','#255d9b','#d7e6f3'],
   Graphite: ['#141517','#1b1c1f','#191a1d','#2c2d32','#ececef','#929399','#b8acd9','#28272e'],
   Midnight: ['#0d1520','#131e2d','#101b29','#253449','#dce6f3','#8295ad','#8bbbf2','#203047'],
   Dune: ['#ebe6de','#f8f5ee','#f1ece3','#dcd4c7','#3c3832','#8b8173','#8e684a','#e9e1d5'],
   Forest: ['#121b18','#19241f','#15201c','#2b3b32','#e1e9df','#8eaa98','#a9c49b','#29392e']
 };
-let settings = {theme:'Graphite',fontSize:14,sidebar:false,provider:'codex',claudeModel:'',model:'',effort:'',customThemes:{},panelOpacity:100,highlightOpacity:100,settingsOpacity:100,githubWidget:false};
+let settings = {theme:'Graphite',fontSize:14,fontFamily:'Menlo',backgroundOpacity:100,panelLayout:'right',panelSize:36,sidebar:false,provider:'codex',claudeModel:'',model:'',effort:'',customThemes:{},panelOpacity:100,highlightOpacity:100,settingsOpacity:100,githubWidget:false};
 let catalog=[], integrationBusy=false;
 let active = null, workspace = '', counter = 0;
 const sessions = new Map();
+const fonts={Menlo:'Menlo, monospace',Monaco:'Monaco, monospace','SF Mono':'"SF Mono", Menlo, monospace','Courier New':'"Courier New", monospace'};
+function layout(){
+ document.querySelector('main').dataset.layout=settings.panelLayout;
+ document.documentElement.style.setProperty('--panel-size',settings.panelSize+'%');
+ fitAll();
+}
 function save(){send({type:'settings',value:settings});}
 function theme(){
  const p=settings.customThemes[settings.theme] || palettes[settings.theme] || palettes.Graphite;
+ const glass=!Object.hasOwn(settings.customThemes,settings.theme)&&settings.theme.startsWith('Liquid Glass ');
+ document.documentElement.dataset.material=glass?'glass':'solid';
+ document.documentElement.dataset.tone=settings.theme==='Liquid Glass Light'?'light':'dark';
+ document.documentElement.style.setProperty('--window-fill',p[0]+Math.round(settings.backgroundOpacity*2.55).toString(16).padStart(2,'0'));
  const alpha=(hex,n)=>hex+Math.round(n*2.55).toString(16).padStart(2,'0');
- for(const [key,color,value] of [['panel-fill',p[1],settings.panelOpacity],['sidebar-fill',p[2],settings.panelOpacity],['highlight-fill',p[7],settings.highlightOpacity],['settings-fill',p[1],settings.settingsOpacity]])document.documentElement.style.setProperty('--'+key,alpha(color,value));
+ for(const [key,color,value] of [['panel-fill',p[1],settings.panelOpacity],['sidebar-fill',p[2],settings.panelOpacity],['highlight-fill',p[7],settings.highlightOpacity],['settings-fill',p[1],settings.settingsOpacity]])document.documentElement.style.setProperty('--'+key,alpha(color,key==='settings-fill'?value*(glass?.9:1):value*settings.backgroundOpacity/100*(glass?.76:1)));
  ['bg','surface','panel','line','text','muted','accent','hover'].forEach((k,i)=>document.documentElement.style.setProperty('--'+k,p[i]));
  const luminance=[1,3,5].map(i=>parseInt(p[0].slice(i,i+2),16));
- document.documentElement.style.colorScheme = (luminance[0]*.2126+luminance[1]*.7152+luminance[2]*.0722)>150?'light':'dark';
- sessions.forEach(s=>{s.term.options.fontSize=settings.fontSize;s.term.options.theme={background:'#00000000',foreground:p[4],cursor:p[6],selectionBackground:p[6]+'44',black:p[0],brightBlack:p[5],red:'#d87878',green:'#83ab82',yellow:'#c2a16f',blue:'#85a8d3',magenta:'#b69bcc',cyan:'#7db5b0',white:p[4]};});
+ const light=(luminance[0]*.2126+luminance[1]*.7152+luminance[2]*.0722)>150;
+ document.documentElement.style.setProperty('--control-scheme',light?'light':'dark');
+ sessions.forEach(s=>{s.term.options.fontSize=settings.fontSize;s.term.options.fontFamily=fonts[settings.fontFamily]||fonts.Menlo;s.term.options.theme={background:'#00000000',foreground:p[4],cursor:p[6],selectionBackground:p[6]+'44',black:p[0],brightBlack:p[5],red:light?'#a72e3c':'#d87878',green:light?'#276a40':'#83ab82',yellow:light?'#805b14':'#c2a16f',blue:light?'#285fa0':'#85a8d3',magenta:light?'#7a459b':'#b69bcc',cyan:light?'#206f79':'#7db5b0',white:p[4]};});
  $('fontSize').textContent=settings.fontSize;
  document.querySelectorAll('.theme-card').forEach(b=>{b.classList.toggle('selected',b.dataset.theme===settings.theme);b.setAttribute('aria-pressed',b.dataset.theme===settings.theme);});
  fitAll();
@@ -29,7 +42,7 @@ function terminal(id, mode){
  if(sessions.has(id))return sessions.get(id);
  const host=mode==='shell'?$('shell'):document.createElement('div');
  if(mode!=='shell'){host.className='terminal-host';$('terminals').append(host);}
- const term=new Xterm.Terminal({allowTransparency:true,cursorBlink:true,fontFamily:'Menlo, Monaco, monospace',fontSize:settings.fontSize,lineHeight:1.28,scrollback:10000,allowProposedApi:false,convertEol:false});
+ const term=new Xterm.Terminal({allowTransparency:true,cursorBlink:true,fontFamily:fonts[settings.fontFamily]||fonts.Menlo,fontSize:settings.fontSize,lineHeight:1.28,scrollback:10000,allowProposedApi:false,convertEol:false});
  const fit=new Xterm.FitAddon();term.loadAddon(fit);term.open(host);
  const s={id,mode,term,fit,host,ended:false,workspace,model:mode==='claude'?settings.claudeModel:settings.model,effort:mode==='claude'?'':settings.effort};sessions.set(id,s);
  term.onData(input=>send({type:'input',id,input}));
@@ -52,7 +65,7 @@ function createCodex(){const mode=settings.provider==='claude'?'claude':'codex';
 function sidebar(show){settings.sidebar=show;$('sidebar').hidden=!show;$('toggle').setAttribute('aria-pressed',show);if(show&&!sessions.has('shell')){terminal('shell','shell');send({type:'start',id:'shell',mode:'shell'});}fitAll();save();if(show)sessions.get('shell')?.term.focus();else sessions.get(active)?.term.focus();}
 function dialog(show){$('overlay').hidden=!show;document.querySelector('header').inert=show;document.querySelector('main').inert=show;if(show){syncSettings();refreshIntegration();$('closeSettings').focus();}else sessions.get(active)?.term.focus();}
 window.studio = {
- boot(config){settings={...settings,...config.settings};settings.customThemes ||= {};renderThemes();workspace=config.cwd;$('folderName').textContent=workspace.split('/').pop()||'Workspace';$('folder').title=workspace+' — choose folder for new sessions';theme();createCodex();if(settings.sidebar)sidebar(true);showGithubWidget(settings.githubWidget);},
+ boot(config){settings={...settings,...config.settings};settings.customThemes ||= {};settings.backgroundOpacity=Math.max(0,Math.min(100,Number(settings.backgroundOpacity)||0));settings.panelSize=Math.max(25,Math.min(60,Number(settings.panelSize)||36));if(!['right','left','bottom','top'].includes(settings.panelLayout))settings.panelLayout='right';if(!fonts[settings.fontFamily])settings.fontFamily='Menlo';layout();document.body.classList.add('opening');setTimeout(()=>document.body.classList.remove('opening'),800);renderThemes();workspace=config.cwd;$('folderName').textContent=workspace.split('/').pop()||'Workspace';$('folder').title=workspace+' — choose folder for new sessions';theme();createCodex();if(settings.sidebar)sidebar(true);showGithubWidget(settings.githubWidget);},
  receive(id,msg){const s=sessions.get(id);if(!s)return;if(msg.data)s.term.write(Uint8Array.from(atob(msg.data),c=>c.charCodeAt(0)));if(msg.exit!==undefined){s.ended=true;s.term.writeln('\r\n\x1b[90mSession ended ('+msg.exit+'). Start a new session to continue.\x1b[0m');updateStatus();}},
  folder(path){workspace=path;$('folderName').textContent=path.split('/').pop();$('folder').title=path;createCodex();if(settings.githubWidget)loadGithubWidget();toast('New session opened in '+path.split('/').pop());},
  integration(result){
@@ -96,7 +109,8 @@ function syncEditor(){
  $('updateTheme').disabled=$('deleteTheme').disabled=!custom;
 }
 function syncSettings(){
- for(const key of ['panelOpacity','highlightOpacity','settingsOpacity']){$(key).value=settings[key];$(key+'Value').textContent=settings[key]+'%';}
+ for(const key of ['backgroundOpacity','panelOpacity','highlightOpacity','settingsOpacity']){$(key).value=settings[key];$(key+'Value').textContent=settings[key]+'%';}
+ $('fontFamily').value=settings.fontFamily;$('panelLayout').value=settings.panelLayout;$('panelSize').value=settings.panelSize;$('panelSizeValue').textContent=settings.panelSize+'%';
  renderModels();syncEditor();
 }
 function modelKey(){return settings.provider==='claude'?'claudeModel':'model';}
@@ -130,7 +144,10 @@ for(const button of document.querySelectorAll('[data-page]'))button.onclick=()=>
  document.querySelectorAll('[data-page]').forEach(b=>b.setAttribute('aria-selected',b===button));
  document.querySelectorAll('[data-section]').forEach(s=>s.hidden=s.dataset.section!==button.dataset.page);document.querySelector('.settings-scroll').scrollTop=0;
 };
-for(const key of ['panelOpacity','highlightOpacity','settingsOpacity'])$(key).oninput=()=>{settings[key]=Number($(key).value);$(key+'Value').textContent=settings[key]+'%';theme();save();};
+for(const key of ['backgroundOpacity','panelOpacity','highlightOpacity','settingsOpacity'])$(key).oninput=()=>{settings[key]=Number($(key).value);$(key+'Value').textContent=settings[key]+'%';theme();save();};
+$('fontFamily').onchange=()=>{settings.fontFamily=$('fontFamily').value;theme();save();};
+$('panelLayout').onchange=()=>{settings.panelLayout=$('panelLayout').value;layout();save();};
+$('panelSize').oninput=()=>{settings.panelSize=Number($('panelSize').value);$('panelSizeValue').textContent=settings.panelSize+'%';layout();save();};
 function storeTheme(update){
  const name=update?settings.theme:$('themeName').value.trim();
  if(!name||Object.hasOwn(palettes,name)||['__proto__','constructor','prototype'].includes(name)||(!update&&Object.hasOwn(settings.customThemes,name))){$('themeMessage').textContent='Choose a unique name for your theme.';return;}
