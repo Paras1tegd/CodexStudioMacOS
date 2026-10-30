@@ -189,7 +189,7 @@ After updating to this version, quit the app when your sessions are finished, re
 
 Open **Settings** or press **Command comma**. Appearance includes the six built-in themes, saved custom themes with eight editable colors, terminal font (Menlo, Monaco, SF Mono with Menlo fallback, or Courier New), text size, and window background opacity from 0–100%. Lowering window opacity reveals the desktop through the main background and terminal panels while leaving text opaque. Independent panel and highlight opacity further adjust those surfaces; settings-card opacity is separate.
 
-Choose **Terminal position** (left, right, top, or bottom) and **Terminal panel size** (25–60%) in Appearance. Show or hide the terminal with Command J. Layout and font changes resize the existing PTYs without restarting sessions, and all choices persist. A brief startup fade and slide respects macOS Reduce Motion. The app icon is regenerated at all standard sizes on every build.
+Choose **Terminal position** (left, right, top, or bottom) and **Terminal panel size** (25–60%) in Appearance. Show or hide the terminal with Command J. Layout and font changes resize the existing PTYs without restarting sessions, and all choices persist. The optional 3.2-second opening draws a six-strand knot, morphs it into the Codex prompt, and docks it into the header as the workspace appears. It follows the selected theme and respects macOS Reduce Motion. Settings → Appearance offers a startup toggle and Replay button. The first key or click dismisses the animation immediately; terminal sessions start in parallel. The app icon is regenerated at all standard sizes on every build.
 
 **Model & thinking** reads the installed Codex model catalog and offers the supported effort levels. You can also enter a custom model ID. Choices apply to new sessions via Codex CLI arguments; existing sessions remain unchanged (use `/model` in Codex for those). Leaving both controls at default preserves the CLI configuration, authentication, approvals, and sandbox settings. Configuration reference: https://learn.chatgpt.com/docs/config-file/config-reference.
 
@@ -212,3 +212,7 @@ The app loads its icon from the bundle, with a PNG fallback. Development install
 Desktop transparency requires the current native build: an older installed executable can keep the window opaque even when the slider saves correctly. The window, WebKit page background, and CSS canvas must all allow transparency. Control color schemes are scoped below the canvas so they cannot supply an opaque page fill. Text stays fully opaque.
 
 After updating Swift or JavaScript, close Codex Studio normally, run `bash build.sh` from another terminal in this source folder, and reopen the app. CSS alone reloads live; it cannot change an older executable’s native window settings. `bash build.sh --release` builds a separate app without interrupting active sessions.
+
+### Startup animation checks
+
+Run `swift -module-cache-path .build/module-cache tests/test_startup.swift` from the project folder to check JavaScript syntax and animation lifecycle behavior. The checks cover replay, disabled startup, Reduce Motion, keyboard/pointer dismissal, backgrounding, and cleanup when animation frames stall. No Node.js packages are required.

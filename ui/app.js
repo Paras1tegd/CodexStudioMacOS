@@ -9,7 +9,7 @@ const palettes = {
   Dune: ['#ebe6de','#f8f5ee','#f1ece3','#dcd4c7','#3c3832','#8b8173','#8e684a','#e9e1d5'],
   Forest: ['#121b18','#19241f','#15201c','#2b3b32','#e1e9df','#8eaa98','#a9c49b','#29392e']
 };
-let settings = {theme:'Graphite',fontSize:14,fontFamily:'Menlo',backgroundOpacity:100,panelLayout:'right',panelSize:36,sidebar:false,provider:'codex',claudeModel:'',model:'',effort:'',customThemes:{},panelOpacity:100,highlightOpacity:100,settingsOpacity:100,githubWidget:false};
+let settings = {theme:'Graphite',fontSize:14,fontFamily:'Menlo',backgroundOpacity:100,panelLayout:'right',panelSize:36,sidebar:false,provider:'codex',claudeModel:'',model:'',effort:'',customThemes:{},panelOpacity:100,highlightOpacity:100,settingsOpacity:100,githubWidget:false,startupAnimation:true};
 let catalog=[], integrationBusy=false;
 let active = null, workspace = '', counter = 0;
 const sessions = new Map();
@@ -20,6 +20,9 @@ function layout(){
  fitAll();
 }
 function save(){send({type:'settings',value:settings});}
+const startup = new StudioStartup();
+function finishStartupAnimation(){startup.finish();}
+function playStartupAnimation(){startup.play(settings.startupAnimation);}
 function theme(){
  const p=settings.customThemes[settings.theme] || palettes[settings.theme] || palettes.Graphite;
  const glass=!Object.hasOwn(settings.customThemes,settings.theme)&&settings.theme.startsWith('Liquid Glass ');
@@ -65,7 +68,7 @@ function createCodex(){const mode=settings.provider==='claude'?'claude':'codex';
 function sidebar(show){settings.sidebar=show;$('sidebar').hidden=!show;$('toggle').setAttribute('aria-pressed',show);if(show&&!sessions.has('shell')){terminal('shell','shell');send({type:'start',id:'shell',mode:'shell'});}fitAll();save();if(show)sessions.get('shell')?.term.focus();else sessions.get(active)?.term.focus();}
 function dialog(show){$('overlay').hidden=!show;document.querySelector('header').inert=show;document.querySelector('main').inert=show;if(show){syncSettings();refreshIntegration();$('closeSettings').focus();}else sessions.get(active)?.term.focus();}
 window.studio = {
- boot(config){settings={...settings,...config.settings};settings.customThemes ||= {};settings.backgroundOpacity=Math.max(0,Math.min(100,Number(settings.backgroundOpacity)||0));settings.panelSize=Math.max(25,Math.min(60,Number(settings.panelSize)||36));if(!['right','left','bottom','top'].includes(settings.panelLayout))settings.panelLayout='right';if(!fonts[settings.fontFamily])settings.fontFamily='Menlo';layout();document.body.classList.add('opening');setTimeout(()=>document.body.classList.remove('opening'),800);renderThemes();workspace=config.cwd;$('folderName').textContent=workspace.split('/').pop()||'Workspace';$('folder').title=workspace+' — choose folder for new sessions';theme();createCodex();if(settings.sidebar)sidebar(true);showGithubWidget(settings.githubWidget);},
+ boot(config){settings={...settings,...config.settings};settings.customThemes ||= {};settings.backgroundOpacity=Math.max(0,Math.min(100,Number(settings.backgroundOpacity)||0));settings.panelSize=Math.max(25,Math.min(60,Number(settings.panelSize)||36));if(!['right','left','bottom','top'].includes(settings.panelLayout))settings.panelLayout='right';if(!fonts[settings.fontFamily])settings.fontFamily='Menlo';layout();renderThemes();workspace=config.cwd;$('folderName').textContent=workspace.split('/').pop()||'Workspace';$('folder').title=workspace+' — choose folder for new sessions';theme();playStartupAnimation();createCodex();if(settings.sidebar)sidebar(true);showGithubWidget(settings.githubWidget);},
  receive(id,msg){const s=sessions.get(id);if(!s)return;if(msg.data)s.term.write(Uint8Array.from(atob(msg.data),c=>c.charCodeAt(0)));if(msg.exit!==undefined){s.ended=true;s.term.writeln('\r\n\x1b[90mSession ended ('+msg.exit+'). Start a new session to continue.\x1b[0m');updateStatus();}},
  folder(path){workspace=path;$('folderName').textContent=path.split('/').pop();$('folder').title=path;createCodex();if(settings.githubWidget)loadGithubWidget();toast('New session opened in '+path.split('/').pop());},
  integration(result){
@@ -109,6 +112,7 @@ function syncEditor(){
  $('updateTheme').disabled=$('deleteTheme').disabled=!custom;
 }
 function syncSettings(){
+ $('startupAnimation').checked=settings.startupAnimation;
  for(const key of ['backgroundOpacity','panelOpacity','highlightOpacity','settingsOpacity']){$(key).value=settings[key];$(key+'Value').textContent=settings[key]+'%';}
  $('fontFamily').value=settings.fontFamily;$('panelLayout').value=settings.panelLayout;$('panelSize').value=settings.panelSize;$('panelSizeValue').textContent=settings.panelSize+'%';
  renderModels();syncEditor();
@@ -145,6 +149,8 @@ for(const button of document.querySelectorAll('[data-page]'))button.onclick=()=>
  document.querySelectorAll('[data-section]').forEach(s=>s.hidden=s.dataset.section!==button.dataset.page);document.querySelector('.settings-scroll').scrollTop=0;
 };
 for(const key of ['backgroundOpacity','panelOpacity','highlightOpacity','settingsOpacity'])$(key).oninput=()=>{settings[key]=Number($(key).value);$(key+'Value').textContent=settings[key]+'%';theme();save();};
+$('replayStartup').onclick=()=>{dialog(false);startup.play(true);};
+$('startupAnimation').onchange=()=>{settings.startupAnimation=$('startupAnimation').checked;if(!settings.startupAnimation)finishStartupAnimation();save();};
 $('fontFamily').onchange=()=>{settings.fontFamily=$('fontFamily').value;theme();save();};
 $('panelLayout').onchange=()=>{settings.panelLayout=$('panelLayout').value;layout();save();};
 $('panelSize').oninput=()=>{settings.panelSize=Number($('panelSize').value);$('panelSizeValue').textContent=settings.panelSize+'%';layout();save();};

@@ -3,7 +3,13 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; script-src 'self' file:; style-src 'self' file: 'unsafe-inline'; img-src 'self' file: data:; connect-src 'none'">
 <title>Codex Studio</title><link rel="stylesheet" href="vendor/xterm.css"><link id="skin" rel="stylesheet" href="style.css"></head>
 <body>
-<header><div class="brand"><span class="mark" aria-hidden="true">›_</span><div>Codex <strong>Studio</strong><small>A little space for big ideas.</small></div></div><div class="header-actions"><button id="folder" title="Choose folder for future sessions">▱ <span id="folderName">Workspace</span></button><button id="settings" title="Settings, ⌘,">◐ <span>Settings</span></button><button id="toggle" title="Toggle terminal, ⌘J" aria-pressed="false">▥ <span>Terminal</span><kbd>⌘J</kbd></button></div></header>
+<div id="startupIntro" aria-hidden="true">
+  <div class="startup-atmosphere"></div>
+  <div class="startup-orbit"><i></i><i></i><i></i></div>
+  <div class="startup-symbol"><svg class="startup-morph" viewBox="0 0 24 24" fill="none"></svg></div>
+  <div class="startup-wordmark"><span>Codex <strong>Studio</strong></span><small>A little space for big ideas.</small></div>
+</div>
+<header><div class="brand"><span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m5.7 6.83 4.8 5.17-4.8 5.17m7.98-.61h6"/></svg></span><div>Codex <strong>Studio</strong><small>A little space for big ideas.</small></div></div><div class="header-actions"><button id="folder" title="Choose folder for future sessions">▱ <span id="folderName">Workspace</span></button><button id="settings" title="Settings, ⌘,">◐ <span>Settings</span></button><button id="toggle" title="Toggle terminal, ⌘J" aria-pressed="false">▥ <span>Terminal</span><kbd>⌘J</kbd></button></div></header>
 <main><section class="workspace"><div class="pane-head"><div><span class="live-dot"></span><b id="agentLabel">Codex CLI</b></div><button id="new" class="quiet">＋ New session</button></div><div id="tabs" role="tablist" aria-label="Agent sessions"></div><div id="terminals" aria-label="Agent terminal sessions"></div>
 <footer><span id="status">Starting your workspace…</span><span><kbd>⌘,</kbd> settings</span></footer></section>
 <aside id="sidebar" hidden><div class="pane-head"><div><span class="shell-icon">›_</span><b>Terminal</b></div><div><button id="toggleGithubWidget" class="quiet" title="Toggle GitHub contributions" aria-pressed="false">◩ GitHub</button><button id="restartShell" class="icon" title="New shell">＋</button><button id="closeShell" class="icon" title="Hide terminal">×</button></div></div><div class="shell-caption">YOUR SHELL. YOUR SHORTCUTS.</div><div id="shell"></div><footer><span>zsh</span><span>Independent session</span></footer><section id="githubWidget" aria-label="GitHub contributions" hidden>
@@ -21,6 +27,7 @@
 <div class="settings-scroll">
 <section data-section="appearance" role="tabpanel" aria-label="Appearance">
 <p>Set the mood. Changes appear instantly.</p><label class="label">Color theme</label><div id="themes"></div>
+<div class="setting-row"><label for="startupAnimation">Startup animation<small>A knot of ideas becomes a place to begin. Respects Reduce Motion.</small></label><div class="startup-controls"><button id="replayStartup" class="quiet" type="button">Replay</button><input id="startupAnimation" class="setting-switch" type="checkbox" role="switch"></div></div>
 <div class="setting-row"><div><b>Terminal text</b><small>Keep every line comfortable to read.</small></div><div class="stepper"><button id="smaller" aria-label="Smaller text">−</button><output id="fontSize">14</output><button id="larger" aria-label="Larger text">＋</button></div></div>
 <div class="setting-row"><label for="fontFamily">Terminal font<small>Applies to all open terminals</small></label><select id="fontFamily" class="compact-select"><option>Menlo</option><option>Monaco</option><option>SF Mono</option><option>Courier New</option></select></div>
 <div class="setting-row"><label for="backgroundOpacity">Window background opacity<small>See through to your desktop; text stays opaque</small></label><div class="slider"><input id="backgroundOpacity" type="range" min="0" max="100"><output id="backgroundOpacityValue"></output></div></div>
@@ -46,4 +53,4 @@
 <div class="editor-actions"><button id="switchAccount">Use account</button><button id="loginGithub">Sign in to GitHub…</button><button id="refreshGithub">Refresh</button></div><p id="githubMessage" role="status" class="hint"></p>
 </section></div>
 <div class="settings-bottom"><span>Saved automatically on this Mac</span><button id="done">Done</button></div></section></div>
-<div id="toast" role="status"></div><script src="vendor/xterm.js"></script><script src="app.js"></script></body></html>
+<div id="toast" role="status"></div><script src="vendor/xterm.js"></script><script src="startup.js"></script><script src="app.js"></script></body></html>
