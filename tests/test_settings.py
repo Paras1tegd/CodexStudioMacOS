@@ -61,6 +61,33 @@ class SettingsTests(unittest.TestCase):
   with patch.object(settings_host,'status',return_value={'gh':False}), patch.object(settings_host,'run') as command:
    self.assertIn('Install GitHub CLI',settings_host.contributions('.')['error'])
    command.assert_not_called()
+ def test_independent_tiled_ptys(self):
+  with tempfile.TemporaryDirectory() as directory:
+   fixture=pathlib.Path(directory)/'pane.py'
+   fixture.write_text("import os,time\nprint('READY',flush=True)\nvalue=input()\nsize=os.get_terminal_size()\nprint('RESULT='+value+':'+str(size.columns)+'x'+str(size.lines),flush=True)\n")
+   code="import sys,pty_host; pty_host.launch_args=lambda *_:[sys.executable,'-u',"+repr(str(fixture))+"]; pty_host.main()"
+   processes=[subprocess.Popen([sys.executable,'-c',code,'shell',directory],stdin=subprocess.PIPE,stdout=subprocess.PIPE) for _ in range(4)]
+   try:
+    for p in processes:
+     ready=False
+     deadline=time.monotonic()+5
+     while not ready and time.monotonic()<deadline:
+      if select.select([p.stdout],[],[],.1)[0]:
+       msg=json.loads(p.stdout.readline());ready='READY' in base64.b64decode(msg.get('data','')).decode()
+     self.assertTrue(ready)
+    for i,p in enumerate(processes):
+     commands=[{'cols':70+i*10,'rows':20+i},{'input':'pane'+str(i)+'\n'}]
+     p.stdin.write(''.join(json.dumps(c)+'\n' for c in commands).encode());p.stdin.flush()
+    for i,p in enumerate(processes):
+     p.wait(timeout=5)
+     output=''.join(base64.b64decode(m['data']).decode() for line in p.stdout for m in [json.loads(line)] if 'data' in m)
+     self.assertIn('RESULT=pane'+str(i)+':'+str(70+i*10)+'x'+str(20+i),output)
+     for j in range(4):
+      if j!=i:self.assertNotIn('RESULT=pane'+str(j),output)
+   finally:
+    for p in processes:
+     if p.poll() is None:p.terminate();p.wait(timeout=5)
+     p.stdin.close();p.stdout.close()
  def test_real_pty_input_output_resize(self):
   with tempfile.TemporaryDirectory() as directory:
    env=dict(os.environ,ZDOTDIR=directory)

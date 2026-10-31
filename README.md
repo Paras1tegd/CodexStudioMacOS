@@ -216,3 +216,24 @@ After updating Swift or JavaScript, close Codex Studio normally, run `bash build
 ### Startup animation checks
 
 Run `swift -module-cache-path .build/module-cache tests/test_startup.swift` from the project folder to check JavaScript syntax and animation lifecycle behavior. The checks cover replay, disabled startup, Reduce Motion, keyboard/pointer dismissal, backgrounding, and cleanup when animation frames stall. No Node.js packages are required.
+
+
+### Tiling workspace
+
+Use **＋ Pane** to split the focused pane. Each pane header lets you choose Terminal, Codex, or Claude for the next split, then split side by side or top and bottom. There is no fixed pane limit. Each added pane owns a real independent PTY. Drag dividers to resize (or focus a divider and use arrow keys), and drag headers onto other panes to swap their positions without restarting sessions. Large layouts scroll instead of shrinking terminals to unusable sizes.
+
+Click **×**, then **End session?** to close an added pane and terminate its process. The original workspace remains available; closing the secondary module pane hides it and preserves its session. The existing Modules settings and Command J still control that secondary pane. GitHub remains available through the original module selectors.
+
+Pane types, split positions, and divider ratios are saved. Relaunching starts fresh processes in the saved layout using the current workspace and session settings; it does not resume terminated shell processes or conversations. Added Codex and Claude panes use the respective saved model settings.
+
+These HTML and JavaScript changes require reopening the development app when you are ready to end your current sessions. Bundled installations require rebuilding with the app closed. Only CSS refreshes live.
+
+Checks: `swift -module-cache-path .build/module-cache tests/test_tiling.swift` exercises large layouts, secondary-pane controls, persistence, and removal. The Python test suite also checks concurrent PTY isolation and independent resizing.
+
+### Activity universe
+
+Use **✦ Universe** in the toolbar or choose **Activity universe** under Settings → Modules. The module passively reads the rendered Codex/Claude terminal buffer; it never runs commands or fetches URLs. Files mentioned in output become planets, URLs become stars, and recognized tool identifiers become satellites. The spider moves toward newly observed references and rests afterward. Select a world with the mouse or keyboard to see its source line and observation time. Choose an agent session in the module to inspect its separate trail.
+
+This is a discovery trail, not a completion meter: prompts and prose can contain references too, and terminal output does not prove a tool executed successfully. Only references visible in terminal output can appear. The latest 24 worlds per session are retained in memory until the window closes; URL queries/fragments are excluded from world identities. Source excerpts remain local and may include anything shown in the terminal. Reduce Motion disables crawling animations.
+
+The HTML/JavaScript addition requires quitting and reopening the app. Development installations load this source on the next launch; packaged copies need rebuilding with the app closed (`bash build.sh`). Active sessions are never restarted to apply it.

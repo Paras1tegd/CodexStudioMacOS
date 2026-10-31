@@ -6,7 +6,7 @@ context.exceptionHandler = { _, error in
     fputs("\(error!.toString()!)\n", stderr)
     exit(1)
 }
-for path in ["ui/app.js", "ui/startup.js"] {
+for path in ["ui/app.js", "ui/startup.js", "ui/tiling.js", "ui/universe.js"] {
     context.setObject(try String(contentsOfFile:path,encoding:.utf8), forKeyedSubscript:"source" as NSString)
     context.evaluateScript("new Function(source)")
 }

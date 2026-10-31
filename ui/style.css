@@ -182,3 +182,100 @@ body.opening .mark svg{visibility:hidden}
   [data-material=glass] .settings { background: var(--surface); }
   [data-material=glass] :is(.workspace,aside,.settings) { -webkit-backdrop-filter:none;backdrop-filter:none; }
 }
+
+/* A small persistent echo of the opening solar system, outside the PTYs. */
+header .mark {
+  position: relative;
+  flex-shrink: 0;
+  margin-right: 7px;
+  box-shadow: 0 0 24px color-mix(in srgb,var(--accent) 10%,transparent);
+}
+header .mark::before,
+header .mark::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb,var(--accent) 18%,transparent);
+  background: radial-gradient(circle at 50% 2px,var(--accent) 0 1.5px,transparent 2.5px);
+  animation: workspace-orbit 32s linear infinite;
+}
+header .mark::before { inset: -8px; }
+header .mark::after {
+  inset: -15px;
+  border-color: color-mix(in srgb,var(--accent) 10%,transparent);
+  opacity: .65;
+  animation-duration: 51s;
+  animation-direction: reverse;
+  animation-delay: -17s;
+}
+body.opening .mark::before,body.opening .mark::after { visibility: hidden; }
+@keyframes workspace-orbit { to { transform: rotate(360deg); } }
+@media(prefers-reduced-motion:reduce) {
+  header .mark::before,header .mark::after { animation: none; }
+  header .mark::after { transform: rotate(130deg); }
+}
+
+/* Stable module hosts fill either slot; hidden modules keep their sessions. */
+.studio-module { display:flex;flex-direction:column;flex:1;min-width:0;min-height:0;overflow:hidden; }
+main[data-layout] > aside { display:flex;flex-direction:column; }
+main[data-layout] .shell-module #shell { flex:1;min-height:0; }
+main[data-layout] .shell-module .shell-caption { display:block; }
+main[data-layout] #githubWidget.github-module {
+  flex:1;min-height:0;border:0;padding:22px;overflow:auto;
+}
+.github-module #contributionGrid { height:110px;flex-shrink:0;margin-top:16px; }
+.github-module .github-summary { margin-top:24px; }
+.agent-module .pane-head,.shell-module .pane-head { flex-shrink:0; }
+.agent-module footer { border-top-color:transparent; }
+.settings-nav { flex-wrap:wrap; }
+
+/* Split workspace: scoped so live CSS refresh cannot disrupt older sessions. */
+main.tiling[data-layout] { display:flex;flex-direction:row;overflow:auto;gap:0; }
+.tile-split { display:flex;min-width:0;min-height:0; }
+.tile-split[data-axis=column] { flex-direction:column; }
+.tile { display:flex;flex-direction:column;min-width:260px;min-height:160px;overflow:hidden;border:1px solid var(--line);border-radius:14px;background:var(--panel-fill,var(--surface)); }
+.tile.focused { border-color:var(--accent); }
+.tile.drop-target { outline:2px solid var(--accent);outline-offset:-4px; }
+.tile-bar { display:flex;align-items:center;gap:4px;padding:6px 9px;min-height:39px;border-bottom:1px solid var(--line);cursor:grab; }
+.tile-title { flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:var(--muted); }
+.tile-bar select.pane-kind { width:87px;padding:4px;font-size:10px; }
+.tile-bar button { padding:3px 7px;font-size:14px;border:0; }
+main.tiling .tile > :is(.workspace,aside) { flex:1;width:auto;max-width:none;min-width:0;min-height:0;border:0;border-radius:0;box-shadow:none;display:flex; }
+.tile-terminal { flex:1;min-height:0;margin:12px;overflow:hidden; }
+.tile-divider { flex:0 0 8px;cursor:col-resize;touch-action:none; }
+.tile-split[data-axis=column] > .tile-divider { cursor:row-resize; }
+.tile-divider:hover,.tile-divider:focus-visible { background:var(--highlight-fill,var(--hover));outline:none; }
+main.tiling .pane-head { padding:0 12px; }
+main.tiling #terminals { margin:12px; }
+main.tiling footer { overflow:hidden;white-space:nowrap; }
+
+/* Activity universe: every world comes from observed agent output. */
+.universe-module { background:radial-gradient(ellipse at 25% 30%,#302748 0,transparent 65%),#10131e;color:#ece8f5;overflow:auto; }
+.universe-heading { display:flex;align-items:center;justify-content:space-between;gap:12px;padding:22px 20px 12px; }
+.universe-heading h2 { font-size:21px;font-weight:500;letter-spacing:-.6px;margin:7px 0 0; }
+.universe-heading .eyebrow { color:#b9a6da;font-size:8px; }
+.universe-badge { color:#a1c9c2;border:1px solid #39424e;border-radius:20px;padding:5px 7px;font-size:8px;white-space:nowrap; }
+.universe-session { display:flex;align-items:center;gap:10px;padding:0 20px;color:#a5a0b5;font-size:11px; }
+.universe-session select { min-width:0;flex:1;background:#191c2a;color:#ddd6ed;border:1px solid #373345;border-radius:7px;padding:7px;font-size:11px; }
+.universe-space { position:relative;flex:1;min-height:240px;display:flex;align-items:center; }
+.universe-space svg { width:100%;max-height:480px;overflow:visible; }
+.universe-paths line { stroke:#a28cc6;stroke-width:1;opacity:.25; }
+.universe-world { cursor:pointer;outline:none; }
+.universe-world:hover>circle:first-child,.universe-world:focus>circle:first-child { fill:#c7b3ea22;stroke:#c7b3ea; }
+.universe-world text { fill:#b6aec7;font:11px -apple-system,sans-serif; }
+.universe-spider { pointer-events:none; }
+.universe-spider.crawling .spider-legs { animation:spider-step .18s ease-in-out infinite alternate;transform-origin:center; }
+@keyframes spider-step { to { transform:scale(.88,1.1) rotate(6deg); } }
+.universe-empty { position:absolute;left:12%;right:12%;top:66%;text-align:center;color:#ddd5ec;font-size:14px; }
+.universe-empty span { display:block;color:#9e95ae;font-size:11px;line-height:1.6;margin-top:8px; }
+.universe-legend { display:flex;justify-content:center;gap:20px;font-size:10px;color:#b8abc9;padding:8px; }
+.universe-detail { border-top:1px solid #343043;margin:8px 20px 0;padding:14px 0;min-height:100px;overflow-wrap:anywhere;font-size:11px; }
+.universe-detail b { display:block;color:#ddd1f2;font-weight:500; }
+.universe-detail p { color:#aaa3b9;line-height:1.5;max-height:62px;overflow:auto;white-space:pre-wrap;margin:8px 0; }
+.universe-detail small { color:#938a9e;font-size:9px; }
+.universe-module footer { color:#aba1bd;border-color:#343043;height:auto;min-height:35px;white-space:normal!important; }
+@media(prefers-reduced-motion:reduce) { .universe-spider { transition:none; }.universe-spider.crawling .spider-legs { animation:none; } }
+@media(max-width:1000px) { #showUniverse span { display:none; } }
+
+.universe-module footer > .universe-status { display:block; }

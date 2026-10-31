@@ -1,6 +1,6 @@
 const Xterm = window.Xterm;
 const $ = id => document.getElementById(id);
-const send = message => {window.webkit?.messageHandlers.studio.postMessage(message);if(message.type==='start')setTimeout(()=>{const s=sessions.get(message.id);if(s){s.fit.fit();send({type:'resize',id:s.id,cols:s.term.cols,rows:s.term.rows});}},100);};
+const send = message => {window.webkit?.messageHandlers?.studio?.postMessage(message);if(message.type==='start')setTimeout(()=>{const s=sessions.get(message.id);if(s&&s.host.offsetWidth>0&&s.host.offsetHeight>0){s.fit.fit();send({type:'resize',id:s.id,cols:s.term.cols,rows:s.term.rows});}},100);};
 const palettes = {
   'Liquid Glass Dark': ['#101925','#192839','#1c2c40','#42546a','#edf5ff','#a8bbd0','#b6d6ff','#30465e'],
   'Liquid Glass Light': ['#e3edf6','#f7fbff','#edf5fc','#b2c3d3','#162b40','#536b80','#255d9b','#d7e6f3'],
@@ -13,6 +13,7 @@ let settings = {theme:'Graphite',fontSize:14,fontFamily:'Menlo',backgroundOpacit
 let catalog=[], integrationBusy=false;
 let active = null, workspace = '', counter = 0;
 const sessions = new Map();
+const universe = new StudioUniverse();
 const fonts={Menlo:'Menlo, monospace',Monaco:'Monaco, monospace','SF Mono':'"SF Mono", Menlo, monospace','Courier New':'"Courier New", monospace'};
 function layout(){
  document.querySelector('main').dataset.layout=settings.panelLayout;
@@ -41,13 +42,14 @@ function theme(){
  fitAll();
 }
 function fitAll(){requestAnimationFrame(()=>sessions.forEach(s=>{if(s.host.offsetWidth>0&&s.host.offsetHeight>0){try{s.fit.fit();}catch{}}}));}
-function terminal(id, mode){
+function terminal(id, mode, mount=null){
  if(sessions.has(id))return sessions.get(id);
- const host=mode==='shell'?$('shell'):document.createElement('div');
- if(mode!=='shell'){host.className='terminal-host';$('terminals').append(host);}
+ const host=mount||(mode==='shell'?$('shell'):document.createElement('div'));
+ if(!mount&&mode!=='shell'){host.className='terminal-host';$('terminals').append(host);}
  const term=new Xterm.Terminal({allowTransparency:true,cursorBlink:true,fontFamily:fonts[settings.fontFamily]||fonts.Menlo,fontSize:settings.fontSize,lineHeight:1.28,scrollback:10000,allowProposedApi:false,convertEol:false});
  const fit=new Xterm.FitAddon();term.loadAddon(fit);term.open(host);
- const s={id,mode,term,fit,host,ended:false,workspace,model:mode==='claude'?settings.claudeModel:settings.model,effort:mode==='claude'?'':settings.effort};sessions.set(id,s);
+ const s={id,mode,term,fit,host,tiled:!!mount,ended:false,workspace,model:mode==='claude'?settings.claudeModel:settings.model,effort:mode==='claude'?'':settings.effort};sessions.set(id,s);
+ universe.attach(s);
  term.onData(input=>send({type:'input',id,input}));
  term.onResize(size=>send({type:'resize',id,...size}));
  term.attachCustomKeyEventHandler(event=>{
@@ -57,18 +59,19 @@ function terminal(id, mode){
    }
    return true;
  });
- if(mode!=='shell'){
+ if(!mount&&mode!=='shell'){
   const tab=document.createElement('button');tab.className='tab';tab.textContent=mode==='github'?'GitHub sign-in':(mode==='claude'?'Claude ':'Codex ')+(++counter);tab.role='tab';tab.onclick=()=>activate(id);tab.dataset.id=id;$('tabs').append(tab);activate(id);
  }
  theme();return s;
 }
-function activate(id){active=id;sessions.forEach(s=>{if(s.mode!=='shell')s.host.hidden=s.id!==id;});document.querySelectorAll('.tab').forEach(b=>{b.classList.toggle('active',b.dataset.id===id);b.setAttribute('aria-selected',b.dataset.id===id);});fitAll();sessions.get(id)?.term.focus();updateStatus();}
+function activate(id){active=id;sessions.forEach(s=>{if(!s.tiled&&s.mode!=='shell')s.host.hidden=s.id!==id;});document.querySelectorAll('.tab').forEach(b=>{b.classList.toggle('active',b.dataset.id===id);b.setAttribute('aria-selected',b.dataset.id===id);});fitAll();sessions.get(id)?.term.focus();updateStatus();}
 function updateStatus(){const s=sessions.get(active);$('agentLabel').textContent=s?.mode==='claude'?'Claude Code':s?.mode==='github'?'GitHub sign-in':'Codex CLI';$('status').textContent=s?.ended?'Session ended · start a new session':'●  '+((s?.workspace||workspace).split('/').pop()||'Workspace')+'  /  '+(s?.mode==='github'?'GitHub sign-in':(s?.mode==='claude'?'Claude · '+(s.model||'default'):(s?.model||'Codex default'))+(s?.effort?' · '+s.effort:''));}
-function createCodex(){const mode=settings.provider==='claude'?'claude':'codex';const id=mode+'-'+Date.now();terminal(id,mode);send({type:'start',id,mode});}
-function sidebar(show){settings.sidebar=show;$('sidebar').hidden=!show;$('toggle').setAttribute('aria-pressed',show);if(show&&!sessions.has('shell')){terminal('shell','shell');send({type:'start',id:'shell',mode:'shell'});}fitAll();save();if(show)sessions.get('shell')?.term.focus();else sessions.get(active)?.term.focus();}
-function dialog(show){$('overlay').hidden=!show;document.querySelector('header').inert=show;document.querySelector('main').inert=show;if(show){syncSettings();refreshIntegration();$('closeSettings').focus();}else sessions.get(active)?.term.focus();}
+function createCodex(reveal=true){if(reveal){if(settings.secondaryModule==='agent'){settings.sidebar=true;applyModules();save();}else if(settings.mainModule!=='agent')selectModule('mainModule','agent');}const mode=settings.provider==='claude'?'claude':'codex';const id=mode+'-'+Date.now();terminal(id,mode);send({type:'start',id,mode});}
+function sidebar(show){settings.sidebar=show;applyModules();save();focusModule(show?settings.secondaryModule:settings.mainModule);}
+function focusModule(module){if(module==='shell')sessions.get('shell')?.term.focus();else if(module==='agent')sessions.get(active)?.term.focus();}
+function dialog(show){$('overlay').hidden=!show;document.querySelector('header').inert=show;document.querySelector('main').inert=show;if(show){syncSettings();refreshIntegration();$('closeSettings').focus();}else focusModule(settings.mainModule);}
 window.studio = {
- boot(config){settings={...settings,...config.settings};settings.customThemes ||= {};settings.backgroundOpacity=Math.max(0,Math.min(100,Number(settings.backgroundOpacity)||0));settings.panelSize=Math.max(25,Math.min(60,Number(settings.panelSize)||36));if(!['right','left','bottom','top'].includes(settings.panelLayout))settings.panelLayout='right';if(!fonts[settings.fontFamily])settings.fontFamily='Menlo';layout();renderThemes();workspace=config.cwd;$('folderName').textContent=workspace.split('/').pop()||'Workspace';$('folder').title=workspace+' — choose folder for new sessions';theme();playStartupAnimation();createCodex();if(settings.sidebar)sidebar(true);showGithubWidget(settings.githubWidget);},
+ boot(config){settings={...settings,...config.settings};settings.customThemes ||= {};if(!settings.mainModule)settings.mainModule='agent';if(!settings.secondaryModule)settings.secondaryModule=settings.githubWidget?'github':'shell';settings.backgroundOpacity=Math.max(0,Math.min(100,Number(settings.backgroundOpacity)||0));settings.panelSize=Math.max(25,Math.min(60,Number(settings.panelSize)||36));if(!['right','left','bottom','top'].includes(settings.panelLayout))settings.panelLayout='right';if(!fonts[settings.fontFamily])settings.fontFamily='Menlo';layout();renderThemes();workspace=config.cwd;$('folderName').textContent=workspace.split('/').pop()||'Workspace';$('folder').title=workspace+' — choose folder for new sessions';theme();playStartupAnimation();createCodex(false);if(settings.sidebar)sidebar(true);applyModules();tiles.boot();},
  receive(id,msg){const s=sessions.get(id);if(!s)return;if(msg.data)s.term.write(Uint8Array.from(atob(msg.data),c=>c.charCodeAt(0)));if(msg.exit!==undefined){s.ended=true;s.term.writeln('\r\n\x1b[90mSession ended ('+msg.exit+'). Start a new session to continue.\x1b[0m');updateStatus();}},
  folder(path){workspace=path;$('folderName').textContent=path.split('/').pop();$('folder').title=path;createCodex();if(settings.githubWidget)loadGithubWidget();toast('New session opened in '+path.split('/').pop());},
  integration(result){
@@ -88,7 +91,7 @@ window.studio = {
  githubWidget:receiveGithubWidget,
  toast,
  copy(){if(!$('overlay').hidden){const el=document.activeElement;if(el instanceof HTMLInputElement&&el.type!=='color'&&el.type!=='range'){send({type:'copy',text:el.value.substring(el.selectionStart||0,el.selectionEnd||0)});return;}send({type:'copy',text:window.getSelection()?.toString()||''});return;}const s=[...sessions.values()].find(s=>s.term.hasSelection());if(s)send({type:'copy',text:s.term.getSelection()});},
- paste(text){if(!$('overlay').hidden){const el=document.activeElement;if(el instanceof HTMLInputElement&&['text','search'].includes(el.type)){el.setRangeText(text,el.selectionStart,el.selectionEnd,'end');el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));}return;}const s=[...sessions.values()].find(s=>s.host.contains(document.activeElement))||sessions.get(active);s?.term.paste(text);},
+ paste(text){if(!$('overlay').hidden){const el=document.activeElement;if(el instanceof HTMLInputElement&&['text','search'].includes(el.type)){el.setRangeText(text,el.selectionStart,el.selectionEnd,'end');el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));}return;}const s=[...sessions.values()].find(s=>s.host.contains(document.activeElement))||[...sessions.values()].find(s=>s.host.getClientRects().length&&!s.host.hidden);s?.term.paste(text);},
  action(name){if(name==='sidebar')sidebar(!settings.sidebar);if(name==='settings')dialog(true);if(name==='new')createCodex();},
  refreshCSS(css){let el=$('liveStyle');if(!el){el=document.createElement('style');el.id='liveStyle';document.head.append(el);}el.textContent=css;fitAll();toast('Appearance updated · sessions kept running');}
 };
@@ -112,6 +115,7 @@ function syncEditor(){
  $('updateTheme').disabled=$('deleteTheme').disabled=!custom;
 }
 function syncSettings(){
+ $('mainModule').value=settings.mainModule;$('secondaryModule').value=settings.secondaryModule;$('showSecondary').checked=settings.sidebar;
  $('startupAnimation').checked=settings.startupAnimation;
  for(const key of ['backgroundOpacity','panelOpacity','highlightOpacity','settingsOpacity']){$(key).value=settings[key];$(key+'Value').textContent=settings[key]+'%';}
  $('fontFamily').value=settings.fontFamily;$('panelLayout').value=settings.panelLayout;$('panelSize').value=settings.panelSize;$('panelSizeValue').textContent=settings.panelSize+'%';
@@ -152,8 +156,8 @@ for(const key of ['backgroundOpacity','panelOpacity','highlightOpacity','setting
 $('replayStartup').onclick=()=>{dialog(false);startup.play(true);};
 $('startupAnimation').onchange=()=>{settings.startupAnimation=$('startupAnimation').checked;if(!settings.startupAnimation)finishStartupAnimation();save();};
 $('fontFamily').onchange=()=>{settings.fontFamily=$('fontFamily').value;theme();save();};
-$('panelLayout').onchange=()=>{settings.panelLayout=$('panelLayout').value;layout();save();};
-$('panelSize').oninput=()=>{settings.panelSize=Number($('panelSize').value);$('panelSizeValue').textContent=settings.panelSize+'%';layout();save();};
+$('panelLayout').onchange=()=>{settings.panelLayout=$('panelLayout').value;layout();tiles.configureSecondary();save();};
+$('panelSize').oninput=()=>{settings.panelSize=Number($('panelSize').value);$('panelSizeValue').textContent=settings.panelSize+'%';layout();tiles.configureSecondary();save();};
 function storeTheme(update){
  const name=update?settings.theme:$('themeName').value.trim();
  if(!name||Object.hasOwn(palettes,name)||['__proto__','constructor','prototype'].includes(name)||(!update&&Object.hasOwn(settings.customThemes,name))){$('themeMessage').textContent='Choose a unique name for your theme.';return;}
@@ -182,9 +186,9 @@ new ResizeObserver(fitAll).observe(document.querySelector('main'));
 new ResizeObserver(fitAll).observe($('shell'));
 let widgetBusy=false, widgetReload=false;
 function showGithubWidget(show){
- settings.githubWidget=!!show;$('githubWidget').hidden=!show;
- $('toggleGithubWidget').setAttribute('aria-pressed',!!show);
- if(show)loadGithubWidget();fitAll();save();
+ if(show)selectModule('secondaryModule','github');
+ else if(settings.secondaryModule==='github')sidebar(false);
+ else if(settings.mainModule==='github')selectModule('mainModule','agent');
 }
 function loadGithubWidget(action='contributions',extra={}){
  if(widgetBusy){widgetReload=true;return;}
@@ -235,5 +239,57 @@ $('editWidgetRepo').onclick=()=>{$('widgetRepoForm').hidden=!$('widgetRepoForm')
 $('widgetRepoForm').onsubmit=e=>{e.preventDefault();loadGithubWidget('remote',{repo:$('widgetRepoInput').value});};
 $('widgetChooseFolder').onclick=()=>send({type:'folder'});
 
+// Modules retain their DOM and PTYs even while parked out of view.
+const moduleNames={agent:'Agent sessions',shell:'Terminal',github:'GitHub',universe:'Activity universe'};
+const moduleParking=document.createElement('div');moduleParking.hidden=true;document.body.append(moduleParking);
+const primarySlot=document.querySelector('main > .workspace');
+const secondarySlot=$('sidebar');
+const agentModule=document.createElement('section');agentModule.className='studio-module agent-module';
+agentModule.append(...primarySlot.childNodes);primarySlot.append(agentModule);
+const githubModule=$('githubWidget');moduleParking.append(githubModule);
+const shellModule=document.createElement('section');shellModule.className='studio-module shell-module';
+shellModule.append(...secondarySlot.childNodes);secondarySlot.append(shellModule);
+githubModule.classList.add('studio-module','github-module');
+const modules={agent:agentModule,shell:shellModule,github:githubModule,universe:universe.element};
+function applyModules(){
+ if(!modules[settings.mainModule])settings.mainModule='agent';
+ if(!modules[settings.secondaryModule]||settings.secondaryModule===settings.mainModule)settings.secondaryModule=settings.mainModule==='shell'?'agent':'shell';
+ // Reparent only when needed, keeping selection and terminal buffers intact.
+ for(const [id,element] of Object.entries(modules)){
+  const slot=id===settings.mainModule?primarySlot:id===settings.secondaryModule?secondarySlot:moduleParking;
+  if(element.parentElement!==slot)slot.append(element);
+  element.hidden=false;
+ }
+ secondarySlot.hidden=!settings.sidebar;
+ $('toggle').setAttribute('aria-pressed',settings.sidebar);
+ $('toggle').querySelector('span').textContent=moduleNames[settings.secondaryModule];
+ $('toggle').title='Toggle secondary pane, ⌘J';
+ settings.githubWidget=settings.mainModule==='github'||(settings.sidebar&&settings.secondaryModule==='github');
+ $('toggleGithubWidget').setAttribute('aria-pressed',settings.githubWidget);
+ if(settings.githubWidget)loadGithubWidget();
+ if((settings.mainModule==='shell'||settings.sidebar&&settings.secondaryModule==='shell')&&!sessions.has('shell')){terminal('shell','shell');send({type:'start',id:'shell',mode:'shell'});}
+ $('mainModule').value=settings.mainModule;$('secondaryModule').value=settings.secondaryModule;$('showSecondary').checked=settings.sidebar;
+ tiles.syncSecondary();
+ fitAll();
+}
+function selectModule(slot,id){
+ if(!modules[id])return;
+ const other=slot==='mainModule'?'secondaryModule':'mainModule';
+ if(settings[other]===id)settings[other]=settings[slot];
+ settings[slot]=id;if(slot==='secondaryModule')settings.sidebar=true;
+ applyModules();save();
+}
+for(const slot of ['mainModule','secondaryModule']){
+ for(const [id,name] of Object.entries(moduleNames))$(slot).add(new Option(name,id));
+ $(slot).onchange=()=>selectModule(slot,$(slot).value);
+}
+$('showUniverse').onclick=()=>selectModule('secondaryModule','universe');
+$('showSecondary').onchange=()=>sidebar($('showSecondary').checked);
+// These controls belong to modules, not a particular slot.
+$('closeShell').hidden=true;$('hideWidget').hidden=true;
+new ResizeObserver(fitAll).observe(agentModule);
+new ResizeObserver(fitAll).observe(shellModule);
+
+/* Tiling controller is loaded before the native ready handshake. */
 window.addEventListener('error',e=>send({type:'error',text:e.message}));
-send({type:'ready'});
+
